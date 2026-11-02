@@ -190,6 +190,38 @@ export async function save(cardId: string, c: Partial<Card>): Promise<void> {
   });
 }
 
+/*
+ * Letting go of a card, which is what deleting an account does to one.
+ *
+ * The card is not deleted and must not be: the slug is printed on a piece of plastic in
+ * somebody's pocket, and a deleted row turns that into a 404 with nothing about holding it
+ * to say why. So the content goes, the card goes back to hidden and unclaimed, and the chip
+ * keeps working — it opens the same holding page it opened the day it was written.
+ *
+ * `ownerEmail` stays. It is the record of who the card was issued to, which is ours rather
+ * than theirs, and it is also the way back: registering again on that address finds the
+ * card waiting. Someone who wants that line gone too has to ask us, and the privacy page
+ * says so.
+ */
+export async function release(card: Card): Promise<void> {
+  await updateDoc(doc(db, 'cards', card.id), {
+    ownerUid: null,
+    // The same state createCard() leaves behind, down to the name falling back to the slug.
+    name: card.slug,
+    role: '',
+    location: '',
+    bio: '',
+    phone: '',
+    email: '',
+    website: '',
+    accent: 'studio',
+    services: [],
+    links: [],
+    published: false,
+    updatedAt: serverTimestamp(),
+  });
+}
+
 /** Carries the slug rather than a sentence; the screen writes the sentence. */
 /*
  * Batch passwords, kept where a reinstall cannot reach them.

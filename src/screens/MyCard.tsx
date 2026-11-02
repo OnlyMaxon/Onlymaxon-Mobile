@@ -23,6 +23,7 @@ import {
 } from '../cards';
 import type {Key} from '../i18n';
 import {C, s} from '../theme';
+import {DeleteAccount} from './DeleteAccount';
 
 type T = (k: Key, v?: Record<string, string | number>) => string;
 
@@ -225,6 +226,7 @@ export function MyCard({account, t}: {account: Account; t: T}) {
           <Text style={s.secondaryText}>{t('checkAgain')}</Text>
         </Pressable>
         {error ? <Text style={s.error}>{error}</Text> : null}
+        <DeleteAccount uid={account.uid} email={account.email} cards={cards} t={t} />
       </View>
     );
   }
@@ -245,6 +247,7 @@ export function MyCard({account, t}: {account: Account; t: T}) {
           </Pressable>
         )}
         {error ? <Text style={s.error}>{error}</Text> : null}
+        <DeleteAccount uid={account.uid} email={account.email} cards={cards} t={t} />
       </View>
     );
   }
@@ -362,6 +365,8 @@ export function MyCard({account, t}: {account: Account; t: T}) {
             ))}
         </View>
       ) : null}
+
+      <DeleteAccount uid={account.uid} email={account.email} cards={cards} t={t} />
     </View>
   );
 }

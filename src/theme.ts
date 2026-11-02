@@ -148,4 +148,7 @@ export const s = StyleSheet.create({
     backgroundColor: C.card,
   },
   verdictText: {fontSize: 14, lineHeight: 20},
+
+  legalRow: {flexDirection: 'row', justifyContent: 'center', gap: 20, marginTop: 34},
+  legalLink: {color: C.dim, fontSize: 13, textDecorationLine: 'underline'},
 });

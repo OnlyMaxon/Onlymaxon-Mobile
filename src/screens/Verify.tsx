@@ -12,6 +12,7 @@ import {ActivityIndicator, Pressable, Text, View} from 'react-native';
 import {leave, authErrorKey, refresh, resendVerification, type Account} from '../account';
 import type {Key} from '../i18n';
 import {C, s} from '../theme';
+import {DeleteAccount} from './DeleteAccount';
 
 type T = (k: Key, v?: Record<string, string | number>) => string;
 
@@ -73,6 +74,11 @@ export function Verify({account, onVerified, t}: {account: Account; onVerified: 
 
       {error ? <Text style={s.error}>{error}</Text> : null}
       {note ? <Text style={s.done}>{note}</Text> : null}
+
+      {/* Here too, and not only on the card screen: somebody who registered on the wrong
+          address is stuck on this screen, and signing out does not get rid of the account
+          that holds their typo. */}
+      <DeleteAccount uid={account.uid} email={account.email} t={t} />
     </View>
   );
 }

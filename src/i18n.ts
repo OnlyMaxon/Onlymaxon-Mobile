@@ -42,6 +42,9 @@ const DICT = {
     en: 'A confirmation email goes to that address. Until it is confirmed the card cannot be edited — that is what keeps it out of other people’s hands.',
   },
 
+  legalPrivacy: {ru: 'Политика', en: 'Privacy'},
+  legalTerms: {ru: 'Условия', en: 'Terms'},
+
   // ── verify ──
   verifyTitle: {ru: 'Подтвердите почту', en: 'Confirm your email'},
   verifySent: {
@@ -127,6 +130,21 @@ const DICT = {
     en: 'Saved. The next person who taps the card sees this.',
   },
   otherCards: {ru: 'Другие ваши карточки:', en: 'Your other cards:'},
+
+  // ── deleting an account ──
+  dangerTitle: {ru: 'Удалить аккаунт', en: 'Delete account'},
+  dangerWhy: {
+    ru: 'Аккаунт и всё, что вы в нём заполнили, удаляются навсегда. Отменить это нельзя.',
+    en: 'The account and everything you filled in are deleted for good. This cannot be undone.',
+  },
+  dangerCard: {
+    ru: 'Сама карта останется — её адрес напечатан на пластике, и чип продолжит работать. Она вернётся к состоянию «ещё не настроена», как в день выдачи. Если зарегистрируетесь снова на {email}, карта будет ждать вас.',
+    en: 'The card itself stays — its address is printed on plastic and the chip keeps working. It goes back to "not set up yet", as it was the day it was issued. Register again on {email} and the card will be waiting.',
+  },
+  dangerStart: {ru: 'Удалить аккаунт', en: 'Delete account'},
+  dangerPassword: {ru: 'Введите пароль, чтобы подтвердить', en: 'Enter your password to confirm'},
+  dangerConfirm: {ru: 'Удалить навсегда', en: 'Delete permanently'},
+  dangerCancel: {ru: 'Отмена', en: 'Cancel'},
 
   // ── chips ──
   tabRead: {ru: 'Чтение', en: 'Read'},
@@ -307,6 +325,10 @@ const DICT = {
   authOffline: {
     ru: 'Нет связи с сервером. Проверьте интернет.',
     en: 'No connection to the server. Check the internet.',
+  },
+  authStale: {
+    ru: 'Войдите заново и повторите — для удаления нужен свежий вход.',
+    en: 'Sign in again and retry — deleting an account needs a fresh sign-in.',
   },
   authUnknown: {ru: 'Что-то пошло не так.', en: 'Something went wrong.'},
 

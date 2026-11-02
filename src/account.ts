@@ -12,9 +12,12 @@ import {getApp} from '@react-native-firebase/app';
 
 import type {Key} from './i18n';
 import {
+  EmailAuthProvider,
   createUserWithEmailAndPassword,
+  deleteUser,
   getAuth,
   onAuthStateChanged,
+  reauthenticateWithCredential,
   reload,
   sendEmailVerification,
   sendPasswordResetEmail,
@@ -62,6 +65,10 @@ export function authErrorKey(e: unknown): Key {
       return 'authDisabled';
     case 'auth/too-many-requests':
       return 'authTooMany';
+    // Deleting an account needs a recent sign-in. We re-prove the password immediately
+    // before deleting, so this only appears if that step was somehow skipped.
+    case 'auth/requires-recent-login':
+      return 'authStale';
     case 'auth/network-request-failed':
       return 'authOffline';
     default:
@@ -110,4 +117,35 @@ export async function refresh(): Promise<Account | null> {
   // keep refusing a user who has already confirmed.
   await auth.currentUser.getIdToken(true);
   return toAccount(auth.currentUser);
+}
+
+/*
+ * Proving, again, that the person holding the phone knows the password.
+ *
+ * Firebase refuses to delete an account on a stale sign-in, and rightly: a phone left
+ * unlocked on a table is signed in. So the password is asked for one more time, and that
+ * is also the whole confirmation step — typing it is a deliberate act in a way that
+ * pressing "yes" in a dialog is not.
+ */
+export async function prove(password: string): Promise<void> {
+  const user = auth.currentUser;
+  if (!user?.email) {
+    throw new Error('signed-out');
+  }
+  await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, password));
+}
+
+/*
+ * Deleting the account itself. Irreversible, and deliberately the last step of the
+ * sequence in DeleteAccount.tsx: the cards are let go of first, while there is still a
+ * token that the Firestore rules will accept. Reversed, the account would vanish and leave
+ * a card nobody can reach — not the owner, who no longer exists, and not the address it was
+ * issued to, which is still written on a document only an admin can edit.
+ */
+export async function erase(): Promise<void> {
+  const user = auth.currentUser;
+  if (!user) {
+    throw new Error('signed-out');
+  }
+  await deleteUser(user);
 }

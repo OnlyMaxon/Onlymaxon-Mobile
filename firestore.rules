@@ -80,7 +80,18 @@ service cloud.firestore {
         || (waitingFor(resource.data)
           && request.resource.data.ownerUid == request.auth.uid
           && request.resource.data.ownerEmail == resource.data.ownerEmail
-          && request.resource.data.slug == resource.data.slug);
+          && request.resource.data.slug == resource.data.slug)
+
+        // Or the owner letting go of it, which is what deleting an account does. It comes
+        // back hidden and unclaimed, keeping the slug and the address it was issued to —
+        // the row has to survive, because the slug is printed on plastic. Verification is
+        // deliberately not required here: somebody must always be able to delete their
+        // account, confirmed address or not.
+        || (owns(resource.data)
+          && request.resource.data.ownerUid == null
+          && request.resource.data.ownerEmail == resource.data.ownerEmail
+          && request.resource.data.slug == resource.data.slug
+          && request.resource.data.published == false);
 
       // Nothing deletes a card. The URL is on a physical object: deleting the row would
       // turn a card in somebody's pocket into a 404 with no way to tell from looking at it.
