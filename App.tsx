@@ -1,5 +1,5 @@
 /*
- * Maxon.
+ * OnlyMaxon.
  *
  * Two people use this app and they see different halves of it. A client signs in, finds
  * the card that was handed to them, and edits what strangers see when they tap it — the

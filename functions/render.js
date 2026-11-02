@@ -56,11 +56,11 @@ const LABELS = {
   // The holding page is seen by two different people: whoever was handed the card, and
   // whoever picked it up off a table. It therefore says what to do without saying whose
   // card it is or which address it is waiting for.
-  claim:  { en: 'Is this your card? Open the Maxon app to fill it in.',
-            pl: 'To Twoja karta? Otwórz aplikację Maxon, aby ją wypełnić.',
-            ru: 'Это ваша карта? Откройте приложение Maxon, чтобы заполнить её.',
-            tr: 'Bu kart sizin mi? Doldurmak için Maxon uygulamasını açın.',
-            es: '¿Es tu tarjeta? Abre la app Maxon para completarla.' },
+  claim:  { en: 'Is this your card? Open the OnlyMaxon app to fill it in.',
+            pl: 'To Twoja karta? Otwórz aplikację OnlyMaxon, aby ją wypełnić.',
+            ru: 'Это ваша карта? Откройте приложение OnlyMaxon, чтобы заполнить её.',
+            tr: 'Bu kart sizin mi? Doldurmak için OnlyMaxon uygulamasını açın.',
+            es: '¿Es tu tarjeta? Abre la app OnlyMaxon para completarla.' },
 };
 
 const LANGS = ['en', 'pl', 'ru', 'tr', 'es'];
