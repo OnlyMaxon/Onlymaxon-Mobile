@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Maxon Cards",
+    "name": "Maxon",
     "slug": "onlymaxon-cards",
     "owner": "onlymaxons-team",
     "version": "1.0.0",
@@ -11,6 +11,7 @@
     "backgroundColor": "#06080C",
     "ios": {
       "bundleIdentifier": "com.onlymaxon.cards",
+      "buildNumber": "1",
       "supportsTablet": false,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
@@ -36,7 +37,7 @@
       [
         "react-native-nfc-manager",
         {
-          "nfcPermission": "Maxon Cards reads and writes the chip inside your NFC card."
+          "nfcPermission": "Maxon reads and writes the chip inside your NFC card."
         }
       ],
       "expo-secure-store",

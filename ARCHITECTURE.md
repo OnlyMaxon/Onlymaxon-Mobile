@@ -16,7 +16,7 @@ printed on plastic ever has to be reprinted.
             somebody taps a card                    the owner edits it
                      │                                      │
                      ▼                                      ▼
-        cards.onlymaxon.com/<slug>                   Maxon Cards (Expo)
+        cards.onlymaxon.com/<slug>                   Maxon (Expo)      
                      │                                      │
         ┌────────────┴───────────┐                          │
         │  Cloudflare Worker     │  forwards, rewrites Host │
