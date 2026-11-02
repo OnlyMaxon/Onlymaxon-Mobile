@@ -68,6 +68,16 @@ async function handle(req, res) {
   const slug = (parts[0] || '').toLowerCase();
   const tail = parts[1] || '';
 
+  /*
+   * The bare hostname. Nothing is printed on a card without a slug, so whoever is here
+   * either typed it or followed the credit link from a card page back when that link was
+   * href="/". Either way they are looking for the studio, and a 404 tells them the domain
+   * is broken.
+   */
+  if (!parts.length) {
+    return res.set('cache-control', 'no-store').redirect(302, 'https://onlymaxon.com/');
+  }
+
   if (!SLUG_RE.test(slug) || parts.length > 2) {
     return notFound(res);
   }

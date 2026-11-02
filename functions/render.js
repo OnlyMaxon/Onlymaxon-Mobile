@@ -33,6 +33,16 @@ import { esc, escAttr, dial, initials, rgb, ACCENTS } from './html.js';
  */
 const SITE = 'https://cards.onlymaxon.com';
 
+/*
+ * The studio's own site, which is a different host from this one.
+ *
+ * The credit at the bottom used to be href="/" — correct while a card lived at
+ * onlymaxon.com/u/<slug>, where "/" was the studio's home page. On cards.onlymaxon.com
+ * "/" is this function with no slug, so the link answered 404 to every visitor who
+ * tapped it. Absolute now, and it cannot break again by moving hostname.
+ */
+const STUDIO = 'https://onlymaxon.com';
+
 // The only translated strings on a card: everything else is typed by its owner.
 const LABELS = {
   call:   { en: 'Call',         pl: 'Zadzwoń',        ru: 'Позвонить',          tr: 'Ara',           es: 'Llamar' },
@@ -55,6 +65,13 @@ const LABELS = {
 
 const LANGS = ['en', 'pl', 'ru', 'tr', 'es'];
 const L = (k, lang) => LABELS[k][LANGS.includes(lang) ? lang : 'en'];
+
+/*
+ * And in the card's own language, because the site has all five: English at the root, the
+ * other four behind their own prefix. Somebody who taps a Polish card and wants to know
+ * who made it should not land in Russian.
+ */
+const home = lang => (LANGS.includes(lang) && lang !== 'en' ? `${STUDIO}/${lang}/` : `${STUDIO}/`);
 
 function css(c) {
   return `
@@ -191,7 +208,7 @@ ${c.role ? `    <p class="role">${esc(c.role)}</p>\n` : ''}${c.location ? `    <
     <div class="btns">
 ${buttons}
     </div>${lnk}
-    <a class="credit" href="/">${esc(L('credit', lang))}</a>
+    <a class="credit" href="${escAttr(home(lang))}">${esc(L('credit', lang))}</a>
   </main>
 </body>
 </html>
@@ -222,7 +239,7 @@ ${css(c)}
     <div class="ava" aria-hidden="true">·</div>
     <p class="bio">${esc(L('soon', lang))}</p>
     <p class="bio soft">${esc(L('claim', lang))}</p>
-    <a class="credit" href="/">${esc(L('credit', lang))}</a>
+    <a class="credit" href="${escAttr(home(lang))}">${esc(L('credit', lang))}</a>
   </main>
 </body>
 </html>
