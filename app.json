@@ -20,7 +20,7 @@
     },
     "android": {
       "package": "com.onlymaxon.cards",
-      "versionCode": 3,
+      "versionCode": 4,
       "predictiveBackGestureEnabled": false,
       "adaptiveIcon": {
         "backgroundColor": "#06080C",
@@ -51,7 +51,7 @@
             "useFrameworks": "dynamic"
           },
           "android": {
-            "kotlinVersion": "2.4.21"
+            "kotlinVersion": "2.4.20"
           }
         }
       ]
