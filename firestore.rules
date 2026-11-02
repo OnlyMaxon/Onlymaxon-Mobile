@@ -1,0 +1,136 @@
+rules_version = '2';
+
+/*
+ * Who may touch a card.
+ *
+ * The shape of this product decides the shape of these rules: a card exists before its
+ * owner does. It is created at the bench, with the client's email on it and nobody's
+ * account attached, and the client turns up afterwards — so there has to be a moment where
+ * a stranger proves they are the person the card was made for, and takes it.
+ *
+ * That proof is the verified email address, which is the whole reason the app asks for one.
+ */
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // A confirmed address, not just a typed one. Firebase puts this claim in the token
+    // itself, so nothing here has to trust a field somebody could write.
+    function verified() {
+      return signedIn() && request.auth.token.email_verified == true;
+    }
+
+    // Cards are created at the bench, by us, while writing the chip — there is no sign-up
+    // that produces one. The list is written here rather than in a collection on purpose:
+    // a document can be created by anything that gets hold of a write, while this can only
+    // change by deploying rules. Adding a second admin is a one-line edit and a deploy.
+    function admin() {
+      return verified() && request.auth.token.email in [
+        'calilorucli42@gmail.com'
+      ];
+    }
+
+    function owns(card) {
+      return signedIn() && card.ownerUid == request.auth.uid;
+    }
+
+    // The person the card was made for, before they have claimed it.
+    function waitingFor(card) {
+      return verified()
+        && card.ownerUid == null
+        && card.ownerEmail == request.auth.token.email;
+    }
+
+    match /cards/{cardId} {
+
+      /*
+       * Nobody reads a card from a client except the people it concerns.
+       *
+       * It is tempting to let anyone read a published card — "that is what a card is" — but
+       * the document holds ownerEmail and ownerUid alongside the public fields, and a rule
+       * cannot hand over half a document. The page a stranger sees is rendered by the
+       * Cloud Function, which reads through the Admin SDK and is not governed by these
+       * rules at all, so the public half costs nothing here.
+       */
+      allow get: if owns(resource.data) || waitingFor(resource.data) || admin();
+
+      // Listing is how the app finds "my cards". Each document in the result has to pass,
+      // so a query that is not filtered to this person simply returns an error rather than
+      // somebody else's rows.
+      allow list: if owns(resource.data) || waitingFor(resource.data) || admin();
+
+      allow create: if admin()
+                    && request.resource.data.ownerUid == null
+                    && request.resource.data.published == false;
+
+      allow update: if
+        // The owner editing their own card. They may not hand it to somebody else, and
+        // they may not change the slug — it is printed on plastic that cannot be reissued.
+        (owns(resource.data)
+          && verified()
+          && request.resource.data.ownerUid == resource.data.ownerUid
+          && request.resource.data.ownerEmail == resource.data.ownerEmail
+          && request.resource.data.slug == resource.data.slug)
+
+        // Or the claim: an unclaimed card, taken by the verified address it was made for.
+        // The only field this is allowed to set is the owner.
+        || (waitingFor(resource.data)
+          && request.resource.data.ownerUid == request.auth.uid
+          && request.resource.data.ownerEmail == resource.data.ownerEmail
+          && request.resource.data.slug == resource.data.slug);
+
+      // Nothing deletes a card. The URL is on a physical object: deleting the row would
+      // turn a card in somebody's pocket into a 404 with no way to tell from looking at it.
+      allow delete: if false;
+    }
+
+    /*
+     * The physical chip behind a card: which batch password protects it, what its UID is,
+     * when it was written.
+     *
+     * Deliberately NOT fields on the card document. A client reads their own card in full,
+     * and a rule cannot hand over half a document — so a batch password stored there would
+     * be readable by every client, and with it they could rewrite any chip in that batch,
+     * including other people's. Here it is admin-only, like the batch list itself.
+     */
+    match /chips/{cardId} {
+      allow read, write: if admin();
+    }
+
+    /*
+     * Batch passwords.
+     *
+     * These used to live only in the phone keychain, and a reinstall took the only copy
+     * with it — leaving chips that can be read forever and written never. A password that
+     * exists in exactly one place is not a secret, it is a single point of failure.
+     *
+     * Here it is readable and writable by admins and nobody else: the same people who can
+     * create cards, which is the same people who hold the chips. A client cannot reach it,
+     * and neither can anyone signed in but not on the list.
+     */
+    match /batches/{batchId} {
+      allow read, write: if admin();
+    }
+
+    /*
+     * One document per slug, id = the slug itself. Firestore has no unique index, and this
+     * is the standard way to buy one: the create fails if the document is already there,
+     * inside the same transaction that writes the card.
+     */
+    match /slugs/{slug} {
+      // Read by nobody from a client. The transaction that creates a card reads it with
+      // admin rights, and nothing else has a reason to ask which slugs are taken.
+      allow get, list: if admin();
+      allow create: if admin();
+      allow update, delete: if false;
+    }
+
+    // Anything not named above.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

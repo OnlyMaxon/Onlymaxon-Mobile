@@ -1,0 +1,14 @@
+{
+  "name": "onlymaxon-cards-functions",
+  "description": "cards.onlymaxon.com — the public page a tapped card opens",
+  "type": "module",
+  "main": "index.js",
+  "private": true,
+  "engines": {
+    "node": "22"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.6.0",
+    "firebase-functions": "^6.5.0"
+  }
+}

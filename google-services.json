@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "824245448898",
+    "project_id": "onlymaxon-b4c02",
+    "storage_bucket": "onlymaxon-b4c02.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:824245448898:android:a4c82433449340718ecb5b",
+        "android_client_info": {
+          "package_name": "com.onlymaxon.cards"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBhg1OLt0-poX4pW4iclB2tL5x26_RlZlU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

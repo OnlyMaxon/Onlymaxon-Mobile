@@ -1,0 +1,4 @@
+# Cards are personal pages people were handed on plastic. They are meant to be opened by
+# whoever is holding the card, not found in a search.
+User-agent: *
+Disallow: /

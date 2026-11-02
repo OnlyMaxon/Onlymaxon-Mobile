@@ -1,0 +1,20 @@
+# The only thing left on Cloudflare: a request forwarder for cards.onlymaxon.com.
+#
+# It holds no data and makes no decisions. Firebase renders the page; this exists because
+# Google routes by Host header and a proxied domain cannot reach a function without the
+# Host being rewritten.
+#
+# Deploy:  npx wrangler deploy --config edge/wrangler.toml
+
+name = "onlymaxon-cards-edge"
+main = "worker.js"
+compatibility_date = "2026-10-01"
+workers_dev = false
+
+routes = [
+  { pattern = "cards.onlymaxon.com/*", zone_name = "onlymaxon.com" },
+  # Chips written before the move still say onlymaxon.com/u/<slug>. They cannot be
+  # rewritten once protected, so this prefix stays claimed and redirects. Nothing else on
+  # the site is touched: a route is a prefix match.
+  { pattern = "onlymaxon.com/u/*", zone_name = "onlymaxon.com" },
+]
