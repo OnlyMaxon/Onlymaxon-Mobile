@@ -16,6 +16,7 @@ import {
   createUserWithEmailAndPassword,
   deleteUser,
   getAuth,
+  getIdTokenResult,
   onAuthStateChanged,
   reauthenticateWithCredential,
   reload,
@@ -108,15 +109,29 @@ export async function leave(): Promise<void> {
  * they are done.
  */
 export async function refresh(): Promise<Account | null> {
-  if (!auth.currentUser) {
+  const user = auth.currentUser;
+  if (!user) {
     return null;
   }
-  await reload(auth.currentUser);
-  // The verified flag also lives inside the ID token, which the Firestore rules read. A
-  // token minted before the click still says false, so it has to be replaced or the rules
-  // keep refusing a user who has already confirmed.
-  await auth.currentUser.getIdToken(true);
-  return toAccount(auth.currentUser);
+  await reload(user);
+
+  /*
+   * The token, not the user object, is the authority here — and not only because the
+   * Firestore rules read `email_verified` straight out of it.
+   *
+   * `reload()` refreshes the record on the native side but emits no auth state change, and
+   * the JS user keeps the `emailVerified` it was built with. So pressing "I have confirmed"
+   * reported nothing, while signing out and back in — which builds a new user — worked.
+   * That was the bug: the click had landed, the app could not see it.
+   *
+   * Forcing a new token answers the same question from the source the rules trust, and the
+   * old reading is kept as a fallback in case a future version starts updating it.
+   */
+  const token = await getIdTokenResult(user, true);
+  const fresh = auth.currentUser ?? user;
+  const verified = fresh.emailVerified || token.claims.email_verified === true;
+
+  return fresh.email ? {uid: fresh.uid, email: fresh.email, verified} : null;
 }
 
 /*

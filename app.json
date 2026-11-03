@@ -19,7 +19,7 @@
       "googleServicesFile": "./GoogleService-Info.plist"
     },
     "android": {
-      "package": "com.onlymaxon.cards",
+      "package": "com.onlymaxon.nfc",
       "versionCode": 5,
       "predictiveBackGestureEnabled": false,
       "adaptiveIcon": {
