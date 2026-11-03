@@ -20,7 +20,7 @@
     },
     "android": {
       "package": "com.onlymaxon.cards",
-      "versionCode": 4,
+      "versionCode": 5,
       "predictiveBackGestureEnabled": false,
       "adaptiveIcon": {
         "backgroundColor": "#06080C",
