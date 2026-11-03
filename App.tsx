@@ -121,7 +121,7 @@ function Screen() {
       <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
         <View style={s.header}>
           <Image source={require('./assets/mark.png')} style={s.mark} resizeMode="contain" />
-          <Text style={s.title}>Maxon</Text>
+          <Text style={s.title}>OnlyMaxon</Text>
 
           <View style={s.headerRight}>
             {LANGS.map(l => (

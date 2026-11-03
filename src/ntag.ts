@@ -25,7 +25,7 @@ const CMD = {
   PWD_AUTH: 0x1b,
 } as const;
 
-export const PAGE = {
+const PAGE = {
   CC: 3, // capability container
   USER_FIRST: 4,
   USER_LAST: 129, // 126 pages x 4 = the 504 user bytes of a 215

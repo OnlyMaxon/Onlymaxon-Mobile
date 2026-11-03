@@ -145,7 +145,6 @@ const DICT = {
     ru: 'Сама карта останется — её адрес напечатан на пластике, и чип продолжит работать. Она вернётся к состоянию «ещё не настроена», как в день выдачи. Если зарегистрируетесь снова на {email}, карта будет ждать вас.',
     en: 'The card itself stays — its address is printed on plastic and the chip keeps working. It goes back to "not set up yet", as it was the day it was issued. Register again on {email} and the card will be waiting.',
   },
-  dangerStart: {ru: 'Удалить аккаунт', en: 'Delete account'},
   dangerPassword: {ru: 'Введите пароль, чтобы подтвердить', en: 'Enter your password to confirm'},
   dangerConfirm: {ru: 'Удалить навсегда', en: 'Delete permanently'},
   dangerCancel: {ru: 'Отмена', en: 'Cancel'},
@@ -387,7 +386,7 @@ const DICT = {
 
 export type Key = keyof typeof DICT;
 
-export function translate(lang: Lang, key: Key, vars?: Record<string, string | number>): string {
+function translate(lang: Lang, key: Key, vars?: Record<string, string | number>): string {
   let out: string = DICT[key][lang];
   if (vars) {
     for (const [k, v] of Object.entries(vars)) {

@@ -592,10 +592,38 @@ export function ChipTools({nfcReady, t}: {nfcReady: boolean; t: T}) {
    * protected card in somebody's hand pointing at an address that does not exist, and
    * nothing about holding it would tell you.
    */
+  /*
+   * The card behind a slug, created if it is not there yet.
+   *
+   * A chip write fails often and harmlessly — the phone moves, the chip leaves the field —
+   * and by then the card row exists and the slug is taken. Retrying used to refuse with
+   * "that address already belongs to another card", about a card made thirty seconds
+   * earlier by the person reading the message, and the only way forward was to know that
+   * clearing the email field skips the create.
+   *
+   * So a slug already taken by a card issued to the same address is treated as what it is:
+   * our own previous attempt, to be written onto a chip now. Any other owner still refuses,
+   * which is the case the uniqueness lock exists for.
+   */
+  const cardFor = useCallback(async (slug: string, email: string) => {
+    try {
+      return await createCard({slug, email});
+    } catch (e) {
+      if (!(e instanceof SlugTaken)) {
+        throw e;
+      }
+      const existing = await findBySlug(slug.trim().toLowerCase());
+      if (existing && existing.ownerEmail === email.trim().toLowerCase()) {
+        return existing.id;
+      }
+      throw e;
+    }
+  }, []);
+
   const write = useCallback(
     (o: {url: string; slug: string; email: string; password: BatchPassword; counter: boolean}) =>
       run(async () => {
-        const cardId = o.email ? await createCard({slug: o.slug, email: o.email}) : null;
+        const cardId = o.email ? await cardFor(o.slug, o.email) : null;
         const written = await writeCard({
           url: o.url,
           password: o.password,
@@ -615,7 +643,7 @@ export function ChipTools({nfcReady, t}: {nfcReady: boolean; t: T}) {
         }
         return written;
       }, t('wroteOk')),
-    [run, t],
+    [cardFor, run, t],
   );
 
   const erase = useCallback(

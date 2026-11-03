@@ -23,7 +23,7 @@ import {
   where,
 } from '@react-native-firebase/firestore';
 
-export const db = getFirestore(getApp());
+const db = getFirestore(getApp());
 
 /** The same rule the slug input enforces, and the one the public URL depends on. */
 export const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,38}$/;

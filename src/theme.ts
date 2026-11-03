@@ -20,7 +20,7 @@ export const C = {
   bad: '#E8736B',
 };
 
-export const mono = Platform.OS === 'ios' ? 'Menlo' : 'monospace';
+const mono = Platform.OS === 'ios' ? 'Menlo' : 'monospace';
 
 export const s = StyleSheet.create({
   screen: {flex: 1, backgroundColor: C.bg},
@@ -90,17 +90,6 @@ export const s = StyleSheet.create({
   passwordRow: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'},
   passwordOk: {color: C.ok, fontSize: 14},
   password: {color: C.text, fontSize: 24, fontFamily: mono, letterSpacing: 2, marginVertical: 10},
-  keyValue: {color: C.text, fontSize: 13, fontFamily: mono, marginVertical: 10, lineHeight: 19},
-  command: {
-    color: C.text,
-    fontSize: 12,
-    fontFamily: mono,
-    backgroundColor: C.bg,
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    marginTop: 10,
-  },
   link: {color: C.accent, fontSize: 14, textDecorationLine: 'underline'},
   linkCentered: {textAlign: 'center', marginTop: 14},
 
