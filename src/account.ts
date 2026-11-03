@@ -35,8 +35,21 @@ export type Account = {
 
 export const auth = getAuth(getApp());
 
+/*
+ * One spelling of an address, everywhere.
+ *
+ * A card is created at the bench with its client's email lowercased, and it is found again
+ * by matching that field — in a Firestore query, and in a rule that compares it against
+ * `request.auth.token.email`. Firebase keeps whatever case was typed at registration, so a
+ * client who signs up as Anna@Salon.pl would never match the card made for
+ * anna@salon.pl: the query returns nothing and the rule refuses, and the app can only say
+ * "no card yet". Addresses are case-insensitive in practice, so this is normalised on the
+ * way in and on the way out.
+ */
+const normalise = (email: string) => email.trim().toLowerCase();
+
 function toAccount(u: User | null): Account | null {
-  return u && u.email ? {uid: u.uid, email: u.email, verified: u.emailVerified} : null;
+  return u && u.email ? {uid: u.uid, email: normalise(u.email), verified: u.emailVerified} : null;
 }
 
 export function watchAccount(fn: (a: Account | null) => void): () => void {
@@ -78,7 +91,7 @@ export function authErrorKey(e: unknown): Key {
 }
 
 export async function register(email: string, password: string): Promise<void> {
-  const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
+  const cred = await createUserWithEmailAndPassword(auth, normalise(email), password);
   // Sent immediately, while the person is still looking at the screen that asked for the
   // address. A confirmation that arrives after they have put the phone away is one nobody
   // ever clicks.
@@ -86,7 +99,7 @@ export async function register(email: string, password: string): Promise<void> {
 }
 
 export async function signIn(email: string, password: string): Promise<void> {
-  await signInWithEmailAndPassword(auth, email.trim(), password);
+  await signInWithEmailAndPassword(auth, normalise(email), password);
 }
 
 export async function resendVerification(): Promise<void> {
@@ -96,7 +109,7 @@ export async function resendVerification(): Promise<void> {
 }
 
 export async function resetPassword(email: string): Promise<void> {
-  await sendPasswordResetEmail(auth, email.trim());
+  await sendPasswordResetEmail(auth, normalise(email));
 }
 
 export async function leave(): Promise<void> {
@@ -131,7 +144,7 @@ export async function refresh(): Promise<Account | null> {
   const fresh = auth.currentUser ?? user;
   const verified = fresh.emailVerified || token.claims.email_verified === true;
 
-  return fresh.email ? {uid: fresh.uid, email: fresh.email, verified} : null;
+  return fresh.email ? {uid: fresh.uid, email: normalise(fresh.email), verified} : null;
 }
 
 /*
@@ -147,7 +160,10 @@ export async function prove(password: string): Promise<void> {
   if (!user?.email) {
     throw new Error('signed-out');
   }
-  await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, password));
+  await reauthenticateWithCredential(
+    user,
+    EmailAuthProvider.credential(normalise(user.email), password),
+  );
 }
 
 /*

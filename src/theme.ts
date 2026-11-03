@@ -149,6 +149,17 @@ export const s = StyleSheet.create({
   },
   verdictText: {fontSize: 14, lineHeight: 20},
 
+  /*
+   * A tappable link under something else tappable.
+   *
+   * The margin belongs on the pressable, not on the text inside it: with it on the text,
+   * the touch target begins at the bottom edge of whatever sits above, and any hitSlop
+   * pushes it further in. That is how a low press on "Sign in" came to send a password
+   * reset email, and how a low press on "Save" came to cancel a batch password instead.
+   * Use this instead of a bare Pressable with a margin on its Text.
+   */
+  linkRow: {marginTop: 22, paddingVertical: 6},
+
   legalRow: {flexDirection: 'row', justifyContent: 'center', gap: 20, marginTop: 34},
   legalLink: {color: C.dim, fontSize: 13, textDecorationLine: 'underline'},
 });

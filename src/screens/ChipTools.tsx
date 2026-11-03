@@ -302,8 +302,10 @@ function PasswordBlock({
             <Text style={s.primaryText}>{t('batchSave')}</Text>
           </Pressable>
           {password ? (
-            <Pressable onPress={() => { setTyping(false); setDraft(''); setError(null); }} hitSlop={10}>
-              <Text style={[s.link, s.linkCentered]}>{t('batchKeepOld')}</Text>
+            <Pressable
+              style={s.linkRow}
+              onPress={() => { setTyping(false); setDraft(''); setError(null); }}>
+              <Text style={[s.link, {textAlign: 'center'}]}>{t('batchKeepOld')}</Text>
             </Pressable>
           ) : null}
         </View>
@@ -312,8 +314,8 @@ function PasswordBlock({
           <Pressable style={s.primary} onPress={create}>
             <Text style={s.primaryText}>{t('batchCreate')}</Text>
           </Pressable>
-          <Pressable onPress={() => setTyping(true)} hitSlop={10}>
-            <Text style={[s.link, s.linkCentered]}>{t('batchEnter')}</Text>
+          <Pressable style={s.linkRow} onPress={() => setTyping(true)}>
+            <Text style={[s.link, {textAlign: 'center'}]}>{t('batchEnter')}</Text>
           </Pressable>
         </View>
       )}

@@ -26,6 +26,7 @@ export function SignIn({t}: {t: T}) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
+  const [asking, setAsking] = useState(false);
 
   const ready = /^[^@\s]+@[^@\s.]+\.[^@\s]+$/.test(email.trim()) && password.length >= 6;
 
@@ -35,6 +36,7 @@ export function SignIn({t}: {t: T}) {
     setNote(null);
     try {
       // No navigation on success: the auth listener in App notices and swaps the screen.
+      setAsking(false);
       if (mode === 'up') {
         await register(email, password);
       } else {
@@ -47,9 +49,23 @@ export function SignIn({t}: {t: T}) {
     }
   }, [mode, email, password, t]);
 
+  /*
+   * Asking first, because this used to fire on one tap and did.
+   *
+   * The link sat directly under the sign-in button — its margin was on the text inside the
+   * Pressable rather than on the Pressable, so the touch target began at the button's lower
+   * edge, and a hitSlop of 10 pushed it up inside the button. A slightly low press on
+   * "Sign in" sent a password reset email instead, silently, to somebody who had just
+   * typed the correct password. The spacing below is fixed too; this is the other half.
+   */
   const forgot = useCallback(async () => {
     setError(null);
     setNote(null);
+    if (!asking) {
+      setAsking(true);
+      return;
+    }
+    setAsking(false);
     try {
       await resetPassword(email);
       // Said the same way whether or not the address exists — otherwise this form answers
@@ -58,7 +74,7 @@ export function SignIn({t}: {t: T}) {
     } catch (e) {
       setError(t(authErrorKey(e)));
     }
-  }, [email, t]);
+  }, [asking, email, t]);
 
   return (
     <View>
@@ -117,8 +133,14 @@ export function SignIn({t}: {t: T}) {
       )}
 
       {mode === 'in' ? (
-        <Pressable onPress={forgot} hitSlop={10}>
-          <Text style={[s.link, s.linkCentered]}>{t('forgot')}</Text>
+        /* The margin lives on the Pressable, not on the Text inside it, so the touch
+           target starts below the gap instead of at the button's edge. No hitSlop here
+           for the same reason: this is the one control on the screen that must never be
+           hit by accident. */
+        <Pressable style={s.linkRow} onPress={forgot}>
+          <Text style={[s.link, {textAlign: 'center'}]}>
+            {asking ? t('forgotConfirm', {email: email.trim()}) : t('forgot')}
+          </Text>
         </Pressable>
       ) : (
         <Text style={s.hint}>{t('signUpNote')}</Text>

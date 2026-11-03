@@ -33,6 +33,10 @@ const DICT = {
   createAccount: {ru: 'Создать аккаунт', en: 'Create account'},
   doSignIn: {ru: 'Войти', en: 'Sign in'},
   forgot: {ru: 'забыли пароль?', en: 'forgot your password?'},
+  forgotConfirm: {
+    ru: 'Отправить письмо для смены пароля на {email}? Нажмите ещё раз',
+    en: 'Send a password reset email to {email}? Tap again',
+  },
   resetSent: {
     ru: 'Если на этот адрес есть аккаунт, письмо для смены пароля уже в пути.',
     en: 'If there is an account on that address, a reset email is on its way.',

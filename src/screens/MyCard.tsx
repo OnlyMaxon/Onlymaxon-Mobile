@@ -133,8 +133,12 @@ function Rows<R extends Service | Link>({
               autoCorrect={false}
             />
           </View>
-          <Pressable onPress={() => onChange(rows.filter((_, j) => j !== i))} hitSlop={8}>
-            <Text style={[s.link, {marginTop: 6, fontSize: 13}]}>{t('remove')}</Text>
+          {/* Margin on the pressable: with it on the text, a low tap on the field above
+              deleted the row. See s.linkRow. */}
+          <Pressable
+            style={{marginTop: 8, paddingVertical: 4, alignSelf: 'flex-start'}}
+            onPress={() => onChange(rows.filter((_, j) => j !== i))}>
+            <Text style={[s.link, {fontSize: 13}]}>{t('remove')}</Text>
           </Pressable>
         </View>
       ))}
