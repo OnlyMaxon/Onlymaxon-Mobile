@@ -1,0 +1,34 @@
+SHORT DESCRIPTION (69/80)
+
+The NFC business card that is always current — you edit, it is right.
+
+
+FULL DESCRIPTION (1663/4000)
+
+An OnlyMaxon card is a piece of plastic with a chip inside it. Tap it to a phone and your page opens: your name, what you do, your number, your prices, your links.
+
+The chip holds one web address and nothing else. Everything a visitor sees lives in this app, which is the whole point: change your phone number tonight and the card already in a client's wallet is correct the moment they tap it. No reprinting, no new cards, no waiting.
+
+WHAT YOU CAN DO
+
+• Edit your card and see it live on the next tap
+• Phone, email, website, and links to wherever else you are
+• A list of what you do and what it costs
+• Choose the language your card opens in — English, Polish, Russian, Turkish or Spanish
+• Four colours
+• Hide the card with one switch whenever you want
+
+HOW IT WORKS
+
+Your card is made for you, with your email address on it. You register here with that address, confirm it, and the card becomes yours. That confirmation is the only thing that stops anyone else from claiming it.
+
+Nobody needs an app to read your card. A tap opens an ordinary web page on any phone — whoever is holding the card installs nothing.
+
+WHAT IT DOES NOT DO
+
+No location. No contacts. No photo library. No analytics, no advertising identifiers, no tracking. Nothing is sold to anybody — there is nothing here to sell.
+
+You can delete your account, and everything on it, from inside the app in about thirty seconds: at the bottom of your card, confirmed with your password. The card itself keeps working and goes back to "not set up yet" — its address is printed on plastic, and we do not turn your card into a dead link.
+
+Cards are made in Warsaw by OnlyMaxon Studio.
+onlymaxon.com
