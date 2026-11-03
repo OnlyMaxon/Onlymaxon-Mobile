@@ -1,4 +1,37 @@
-{
+/*
+ * The App Store listing. Pushed with: npx eas-cli metadata:push
+ *
+ * A .js file rather than .json for one reason: the account Apple reviews with has a
+ * password, and a password does not belong in a repository. It comes from the environment
+ * instead, and without it the review block is left out altogether rather than written
+ * half-filled:
+ *
+ *   $env:ASC_DEMO_PASSWORD = "..."   # PowerShell
+ *   npx eas-cli metadata:push
+ *
+ * Two things are deliberately not here, because the API refuses them:
+ *
+ *   - The age rating. Apple now requires a `socialMedia` attribute that the eas-cli schema
+ *     does not allow, so that questionnaire is filled in the console. Every answer for this
+ *     app is negative, which comes out as 4+.
+ *   - Screenshots and the 1024 icon. The icon is taken from the binary and needs no upload;
+ *     screenshots are photographs of the app running and cannot come from an API at all.
+ */
+
+const demoPassword = process.env.ASC_DEMO_PASSWORD;
+
+const review = demoPassword ? {
+  "firstName": "Jalil",
+  "lastName": "Orujli",
+  "email": "hello@onlymaxon.com",
+  "phone": "+48 576 925 110",
+  "demoRequired": true,
+  "demoUsername": "rickomaral@gmail.com",
+  "notes": "NFC is not needed to review this app. Reading and writing the chip inside a card is the studio's own bench tooling and is shown only to administrator accounts. A client signs in, finds the card that was issued to them, and edits what a visitor sees when they tap it — the demo account is a client account, so every screen you can reach needs no hardware at all.\n\nSigning in requires a confirmed email address. That is not a formality: a card is created before its owner has an account, with the client's email written on it, and confirming that address is the only thing that stops somebody else from claiming their card. The demo account is already confirmed, so it signs straight in.\n\nDeleting an account is at the bottom of the card screen (guideline 5.1.1(v)). It asks for the password again and then removes the account and everything typed into it. The card itself is not deleted, because its address is printed on a piece of plastic in somebody's pocket — it goes back to an empty, hidden state instead.\n\nA finished card can be seen without the app at https://cards.onlymaxon.com/max",
+  demoPassword,
+} : undefined;
+
+const config = {
   "configVersion": 0,
   "apple": {
     "version": "1.0",
@@ -6,7 +39,10 @@
     "release": {
       "automaticRelease": true
     },
-    "categories": ["BUSINESS", "UTILITIES"],
+    "categories": [
+      "BUSINESS",
+      "UTILITIES"
+    ],
     "info": {
       "en-US": {
         "title": "OnlyMaxon",
@@ -94,4 +130,10 @@
       "userGeneratedContent": false
     }
   }
+};
+
+if (review) {
+  config.apple.review = review;
 }
+
+module.exports = config;
