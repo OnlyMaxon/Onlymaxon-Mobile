@@ -46,14 +46,17 @@ const config = {
     "info": {
       "en-US": {
         "title": "OnlyMaxon",
+        // Apple's API still names these by the older display sizes — there is no
+        // APP_IPHONE_69 or _63, whatever App Store Connect calls them on screen. 67 is
+        // 1290x2796 and 61 is 1179x2556; anything else is refused on upload.
         "screenshots": {
-          "APP_IPHONE_69": [
-            "./store/appstore/screenshots/1-6.9.png",
-            "./store/appstore/screenshots/2-6.9.png"
+          "APP_IPHONE_67": [
+            "./store/appstore/screenshots/1-iphone67.png",
+            "./store/appstore/screenshots/2-iphone67.png"
           ],
-          "APP_IPHONE_63": [
-            "./store/appstore/screenshots/1-6.3.png",
-            "./store/appstore/screenshots/2-6.3.png"
+          "APP_IPHONE_61": [
+            "./store/appstore/screenshots/1-iphone61.png",
+            "./store/appstore/screenshots/2-iphone61.png"
           ]
         },
         "subtitle": "Your NFC card, always current",
