@@ -46,6 +46,16 @@ const config = {
     "info": {
       "en-US": {
         "title": "OnlyMaxon",
+        "screenshots": {
+          "APP_IPHONE_69": [
+            "./store/appstore/screenshots/1-6.9.png",
+            "./store/appstore/screenshots/2-6.9.png"
+          ],
+          "APP_IPHONE_63": [
+            "./store/appstore/screenshots/1-6.3.png",
+            "./store/appstore/screenshots/2-6.3.png"
+          ]
+        },
         "subtitle": "Your NFC card, always current",
         "privacyPolicyUrl": "https://onlymaxon.com/apps/cards/privacy/",
         "supportUrl": "https://onlymaxon.com/",
