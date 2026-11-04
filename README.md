@@ -1,28 +1,27 @@
-# Onlymaxon-mobile
+# OnlyMaxon
 
-The phone side of the NFC card product: tap a card to see what is on the chip, or create a
-card for a client and write it.
+The phone side of the NFC card product. Two people use it and they see different halves: a
+client signs in, finds the card that was handed to them, and edits what a visitor sees when
+they tap it; we read, write and wipe the chips themselves, behind an admin check.
 
-The server lives in `server/`, in this same project. It used to sit inside the OnlyMaxon
-site repository, where the card pages were generated at build time — which meant a client
-changing their phone number cost a commit and a deploy of the whole site. That is the thing
-this project exists to undo: the chip holds a URL, everything a visitor sees comes out of a
-database, and an edit is live on the next tap.
+The chip holds a URL and nothing else. Everything a visitor sees comes out of a database, so
+an edit is live on the next tap — no commit, no deploy, no reprinting.
 
-The site and this project share nothing but the domain.
+`ARCHITECTURE.md` carries the reasoning. This file is how to run it.
 
 ## Why this is a separate project
 
-The OnlyMaxon repository has a `CNAME` and an `index.html` at its root: every file in it is
-a public URL, and its CI regenerates the site and fails if the committed output is stale.
-Card data has no business in that pipeline — it changes when a client edits it, not when
-somebody pushes.
+The card pages used to be generated inside the OnlyMaxon site repository, where every file is
+a public URL and CI fails if the committed output is stale. A client changing their phone
+number cost a commit and a deploy of the whole site. Card data changes when a client edits
+it, not when somebody pushes, and the two pipelines had no business being one.
+
+The site and this project share nothing but the domain.
 
 ## Running it
 
-NFC needs native code, so **Expo Go cannot run this app**. A development build is required,
-and NFC cannot be tested on an emulator either — it has to be a real handset with a real
-card.
+NFC needs native code, so **Expo Go cannot run this app**, and NFC cannot be tested on an
+emulator either — it has to be a real handset with a real card.
 
 ```bash
 npm install
@@ -35,31 +34,52 @@ npm install
 npx expo run:android
 
 # Android or iOS, built in Expo's cloud. The only route to iOS from Windows.
-npx eas-cli@latest build --profile development --platform android
-npx eas-cli@latest build --profile development --platform ios
+npx eas-cli build --profile development --platform android
+npx eas-cli build --profile development --platform ios
 ```
 
-Once a development build is installed on the phone, the JavaScript reloads over the network
-like any Expo project — a native rebuild is only needed when a native dependency or anything
-in `app.json` changes:
+Once a development build is on the phone, the JavaScript reloads over the network like any
+Expo project. A native rebuild is only needed when a native dependency or anything in
+`app.json` changes:
 
 ```bash
 npx expo start --dev-client
 ```
 
-## What the app does today
+Checks, all of which should pass before anything is called done:
 
-Two tabs. **Чтение** looks at a chip and changes nothing. **Запись** creates the card on
-the server and then writes the chip.
+```bash
+npx tsc --noEmit     # types
+npm test             # the NDEF encoder, on a laptop, no chip required
+npx expo-doctor      # dependency and config sanity
+```
+
+## What the client sees
+
+One screen: their card, and the form that changes it. Name, what they do, city, a short
+description, phone, email, website, a list of services with prices, links, the language the
+card opens in, and its colour. A switch hides or publishes it.
+
+A new card is **hidden** until they publish it, and the editor says so loudly at the top. A
+card nobody can see is the one failure that looks like success.
+
+Deleting an account is at the bottom of that screen, as Apple requires. It removes the
+account and everything typed into it; the card itself survives, emptied and unclaimed,
+because its address is printed on plastic in somebody's pocket.
+
+## What the bench sees
+
+Three tabs behind the admin check: **read**, **write**, **erase**.
 
 | field | where it comes from |
 |---|---|
 | chip model | `GET_VERSION`, storage-size byte — tells a 213 sold as a 215 apart |
 | UID | pages 0–1, factory-programmed and not writable |
-| link | the NDEF URI record, decoded by hand in `src/ntag.ts` |
+| link | the NDEF URI record, decoded by hand in `src/ndef.ts` |
 | bytes used | the length of the NDEF TLV, against the chip's capacity |
 | tap counter | `READ_CNT` — the chip's own one-way counter, when `NFC_CNT_EN` is set |
 | protection | `AUTH0`, `PROT`, `CFGLCK` out of the configuration pages |
+| owner | the card behind that URL, and the email it was issued to |
 
 The protection line is the one place the screen gives an opinion. An unprotected chip is not
 a product: anyone with a phone rewrites it to their own URL in about ten seconds, and the
@@ -70,46 +90,49 @@ owner has no way to know. So the screen says that in words rather than printing
 
 Slug, the client's email, and a switch for the chip counter. Then, in this order:
 
-1. `POST /card/api/cards` creates the card on the server, unpublished, owned by that email.
+1. The card is created in Firestore — unpublished, with that email on it and no owner.
 2. The NDEF URL goes onto the chip.
 3. `PWD`, `PACK`, the `ACCESS` byte, and `AUTH0` last — after which nothing on the chip can
    be rewritten without the batch password.
+4. What was physically written is recorded, after the chip accepted it and not before.
 
-Server before chip, always. A failed server call leaves the chip untouched and the whole
-thing one retry away; the other order leaves a protected card in somebody's hand pointing
-at an address that does not exist, and nothing about holding it would tell you.
+Database before chip, always. A failed write leaves the chip untouched and the whole thing
+one retry away; the other order leaves a protected card in somebody's hand pointing at an
+address that does not exist, and nothing about holding it would tell you.
 
-Leave the email empty and step 1 is skipped — for a card whose row already exists.
+Leave the email empty and step 1 is skipped — for a card whose row already exists. A slug
+already held by a card issued to the same address is recognised as a previous attempt and
+written anyway.
 
-Two secrets live in the device keychain, and they are different in kind:
+### The batch password
 
-| | what it is | if it leaks | if it is lost |
-|---|---|---|---|
-| batch password | the only copy in existence | somebody can rewrite that batch | those cards can never be rewritten |
-| server key | a copy of a `wrangler secret` | somebody can create cards, nothing more | one command to replace |
-
-## What is deliberately not here
-
-- **No app links.** An `autoVerify` intent filter on `onlymaxon.com/u/*` would make this app
-  intercept taps meant for the browser — so a client with the app installed would open the
-  app instead of the card, and that is the product failing. The app scans only when its
-  button is pressed.
-- **No sign-in and no editor.** The client edits their page at `onlymaxon.com/card/`, in a
-  browser, signing in with a one-time emailed link. The app never shows anybody else's card
-  and holds no session — it creates cards and writes chips, which is a bench tool, not a
-  product the client installs.
-- **No billing.** The cards are given away.
+One password per batch, not per card, and never committed. It lives in the device keychain
+**and** in Firestore, because it used to live only in the keychain and a reinstall took the
+only copy with it, leaving a chip that can be read forever and written never.
 
 ## The rules writing follows
 
-`PROT` stays **0**: 1 protects reads as well, and a card whose NDEF cannot be read
-without a password is a card no phone will ever open. `AUTH0 = 0x04` already protects the
-configuration pages themselves, so `CFGLCK` buys nothing and is irreversible — it stays off,
-as do the static lock bits. The password is **per batch, not per card**, and is never
-committed. The long version of that reasoning is in `server/README.md`.
+`PROT` stays **0**: 1 protects reads as well, and a card whose NDEF cannot be read without a
+password is a card no phone will ever open. `AUTH0 = 0x04` already protects the configuration
+pages themselves, so `CFGLCK` buys nothing and is irreversible — it stays off, as do the
+static lock bits. `AUTHLIM` stays 0, because a limit bricks a chip with a forgotten password
+forever.
 
-## Store submission, before it comes up
+## What is deliberately not here
 
-The editor signs in with a one-time emailed link, which means an App Store reviewer cannot
-sign in — they will not receive the email. Guideline 2.1 rejections for exactly this are
-routine. A demo account, or a reviewer-only bypass, has to exist before the first submission.
+- **No app links.** An `autoVerify` intent filter on the card URL would make this app
+  intercept taps meant for the browser, so a client with the app installed would open the app
+  instead of the card — the product failing. The app scans only when its button is pressed.
+- **No photo upload.** The renderer draws one and the function serves it, but nothing in the
+  app sends one yet. Cards show an initial.
+- **No billing.** The app is free; the cards are sold once, outside it.
+
+## Store notes
+
+Both stores are fed from this repository: `store.config.js` is pushed with
+`eas metadata:push`, and `store/` holds the icon, feature graphics, screenshots and listing
+copy. Two things cannot go through that API and are filled in by hand — the age rating, which
+Apple gates on an attribute the eas-cli schema rejects, and the data-safety questionnaires.
+
+iOS is `com.onlymaxon.cards`; Android is `com.onlymaxon.nfc`. They differ for a reason worth
+knowing before touching either — see `ARCHITECTURE.md`.

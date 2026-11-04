@@ -44,3 +44,7 @@ yarn-error.*
 .firebase/
 functions/node_modules/
 *-debug.log
+
+# The knowledge graph: generated from the sources, rebuilt with /graphify, and large.
+# Nothing here is authored, so none of it belongs in history.
+graphify-out/
