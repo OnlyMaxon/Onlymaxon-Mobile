@@ -56,9 +56,9 @@ npx expo-doctor      # dependency and config sanity
 
 ## What the client sees
 
-One screen: their card, and the form that changes it. Name, what they do, city, a short
-description, phone, email, website, a list of services with prices, links, the language the
-card opens in, and its colour. A switch hides or publishes it.
+One screen: their card, and the form that changes it. A photograph, name, what they do,
+city, a short description, phone, email, website, a list of services with prices, links, the
+language the card opens in, and its colour. A switch hides or publishes it.
 
 A new card is **hidden** until they publish it, and the editor says so loudly at the top. A
 card nobody can see is the one failure that looks like success.
@@ -123,8 +123,6 @@ forever.
 - **No app links.** An `autoVerify` intent filter on the card URL would make this app
   intercept taps meant for the browser, so a client with the app installed would open the app
   instead of the card — the product failing. The app scans only when its button is pressed.
-- **No photo upload.** The renderer draws one and the function serves it, but nothing in the
-  app sends one yet. Cards show an initial.
 - **No billing.** The app is free; the cards are sold once, outside it.
 
 ## Store notes

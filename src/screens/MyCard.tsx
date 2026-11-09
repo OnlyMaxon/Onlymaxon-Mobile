@@ -7,7 +7,15 @@
  */
 
 import {useCallback, useEffect, useState} from 'react';
-import {ActivityIndicator, Pressable, Switch, Text, TextInput, View} from 'react-native';
+import {
+  ActivityIndicator,
+  Image,
+  Pressable,
+  Switch,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 
 import type {Account} from '../account';
 import {
@@ -22,10 +30,119 @@ import {
   type Service,
 } from '../cards';
 import type {Key} from '../i18n';
+import {PhotoRefused, choosePhoto, photoUrl, removePhoto, setPhoto} from '../photo';
 import {C, s} from '../theme';
 import {DeleteAccount} from './DeleteAccount';
 
 type T = (k: Key, v?: Record<string, string | number>) => string;
+
+/*
+ * The picture, or the letter that stands in for it.
+ *
+ * The letter is not an empty state asking to be filled: a card that never gets a photo is
+ * finished, and saying "add a photo" twice as loudly would make it look broken. So the
+ * preview is the same circle the page draws, and the buttons sit beside it quietly.
+ *
+ * This writes straight through rather than into the draft. Everything else on this screen
+ * is edited and then saved together, but a photo is a file that has already been uploaded
+ * by the time it can be shown — there is nothing left to hold back, and holding it back
+ * would mean a "Save" that sometimes also uploads and sometimes does not.
+ */
+function Photo({
+  card,
+  onChange,
+  t,
+}: {
+  card: Card;
+  onChange: (photoPath: string) => void;
+  t: T;
+}) {
+  const [asking, setAsking] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const run = useCallback(
+    async (job: () => Promise<string>) => {
+      setAsking(false);
+      setBusy(true);
+      setError(null);
+      try {
+        onChange(await job());
+      } catch (e) {
+        setError(e instanceof PhotoRefused ? t(e.key) : t('photoFailed'));
+      } finally {
+        setBusy(false);
+      }
+    },
+    [onChange, t],
+  );
+
+  const pick = (from: 'library' | 'camera') =>
+    run(async () => {
+      const image = await choosePhoto(from);
+      // Backing out of the picker is not a change. Returning the path unchanged leaves the
+      // card exactly as it was, with no error and no flicker.
+      return image === null ? card.photoPath : setPhoto(card.id, image);
+    });
+
+  const drop = () =>
+    run(async () => {
+      await removePhoto(card.id);
+      return '';
+    });
+
+  return (
+    <View style={s.spaced}>
+      <Text style={s.blockLabel}>{t('photo')}</Text>
+      <Text style={s.blockText}>{t('photoHint')}</Text>
+
+      <View style={s.photoRow}>
+        {card.photoPath ? (
+          <Image source={{uri: photoUrl(card.slug, card.photoPath)}} style={s.photoPreview} />
+        ) : (
+          <View style={[s.photoPreview, s.photoEmpty]}>
+            <Text style={s.photoLetter}>
+              {(card.name || card.slug).trim().charAt(0).toUpperCase()}
+            </Text>
+          </View>
+        )}
+
+        <View style={s.photoButtons}>
+          {busy ? (
+            <Text style={s.blockText}>{t('photoWorking')}</Text>
+          ) : asking ? (
+            <>
+              <Pressable style={s.secondary} onPress={() => pick('library')}>
+                <Text style={s.secondaryText}>{t('photoFromLibrary')}</Text>
+              </Pressable>
+              <Pressable style={s.secondary} onPress={() => pick('camera')}>
+                <Text style={s.secondaryText}>{t('photoFromCamera')}</Text>
+              </Pressable>
+              <Pressable style={s.linkRow} onPress={() => setAsking(false)}>
+                <Text style={s.link}>{t('dangerCancel')}</Text>
+              </Pressable>
+            </>
+          ) : (
+            <>
+              <Pressable style={s.secondary} onPress={() => setAsking(true)}>
+                <Text style={s.secondaryText}>
+                  {card.photoPath ? t('photoChange') : t('photoAdd')}
+                </Text>
+              </Pressable>
+              {card.photoPath ? (
+                <Pressable style={s.linkRow} onPress={drop}>
+                  <Text style={[s.link, {color: C.bad}]}>{t('photoRemove')}</Text>
+                </Pressable>
+              ) : null}
+            </>
+          )}
+        </View>
+      </View>
+
+      {error ? <Text style={s.error}>{error}</Text> : null}
+    </View>
+  );
+}
 
 function Field({
   label, value, onChange, placeholder, max, multiline, keyboardType,
@@ -282,13 +399,17 @@ export function MyCard({account, t}: {account: Account; t: T}) {
         </View>
       ) : null}
 
-      <Field label={t('fName')} value={draft.name} onChange={v => set('name', v)} max={LIMITS.name} placeholder="Anna Kowalska" />
-      <Field label={t('fRole')} value={draft.role} onChange={v => set('role', v)} max={LIMITS.role} placeholder="Hair stylist · Mokotów" />
-      <Field label={t('fCity')} value={draft.location} onChange={v => set('location', v)} max={LIMITS.location} placeholder="Warszawa" />
+      {/* Above the name, because that is where it sits on the card itself. The letter the
+          circle falls back to is the first letter of the name, so the two belong together. */}
+      <Photo card={draft} onChange={p => setDraft({...draft, photoPath: p})} t={t} />
+
+      <Field label={t('fName')} value={draft.name} onChange={v => set('name', v)} max={LIMITS.name} placeholder={t('phName')} />
+      <Field label={t('fRole')} value={draft.role} onChange={v => set('role', v)} max={LIMITS.role} placeholder={t('phRole')} />
+      <Field label={t('fCity')} value={draft.location} onChange={v => set('location', v)} max={LIMITS.location} placeholder={t('phCity')} />
       <Field label={t('fBio')} value={draft.bio} onChange={v => set('bio', v)} max={LIMITS.bio} multiline placeholder={t('bioHint')} />
 
-      <Field label={t('fPhone')} value={draft.phone} onChange={v => set('phone', v)} max={LIMITS.phone} keyboardType="phone-pad" placeholder="+48 ..." />
-      <Field label={t('fEmail')} value={draft.email} onChange={v => set('email', v)} max={LIMITS.email} keyboardType="email-address" placeholder="anna@salon.pl" />
+      <Field label={t('fPhone')} value={draft.phone} onChange={v => set('phone', v)} max={LIMITS.phone} keyboardType="phone-pad" placeholder={t('phPhone')} />
+      <Field label={t('fEmail')} value={draft.email} onChange={v => set('email', v)} max={LIMITS.email} keyboardType="email-address" placeholder={t('phEmail')} />
       <Field label={t('fSite')} value={draft.website} onChange={v => set('website', v)} max={LIMITS.website} keyboardType="url" placeholder="https://..." />
 
       <Rows
@@ -299,8 +420,8 @@ export function MyCard({account, t}: {account: Account; t: T}) {
         max={LIMITS.services}
         aKey="name"
         bKey="price"
-        aLabel="Strzyżenie"
-        bLabel="od 120 zł"
+        aLabel={t('phService')}
+        bLabel={t('phPrice')}
         t={t}
       />
 

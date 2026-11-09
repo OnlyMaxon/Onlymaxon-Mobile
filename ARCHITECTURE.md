@@ -224,6 +224,23 @@ it was protected with, and that is the only way back into it.
 
 ## Decisions worth knowing
 
+**Why photographs go through a function instead of straight into Storage.** The obvious
+shape is the phone uploading with the Storage client SDK and then writing `photoPath` onto
+its own card. Both halves are wrong in the same way: a client that picks its own storage
+path can upload one picture and point a *different* card at it, and a client that can write
+`photoPath` can aim its card at any object in the bucket — somebody else's face, served
+under its own name, by our own renderer. So the phone posts the bytes to
+`functions/photo.js` with its ID token and nothing more; the function decides the path,
+names it after a hash of the contents, and writes the field with admin rights.
+`firestore.rules` backs this up by refusing any client write that *changes* `photoPath`,
+with one exception: letting go of a card may set it to empty, because deleting an account
+has to take the face off the card even if deleting the file itself failed.
+
+Naming the object after its hash is also what earns the year-long `immutable` on
+`/<slug>/photo`: the hash rides in the query string, so a replacement is a new address
+rather than new bytes behind an old one. Without that, anybody who had loaded the previous
+picture would keep being shown it by their own browser for a year.
+
 **Why a subdomain for cards.** The site is a static build on GitHub Pages; a card is a row
 in a database. One domain serving both means one of them bends. `cards.onlymaxon.com` is one
 DNS record, and the site's pipeline never learns that cards exist.
@@ -279,6 +296,7 @@ src/
 
 functions/           Cloud Function `card` — renders the public page
   index.js           routing, Firestore read, photo streaming
+  photo.js           the authenticated other half: setting and removing that photo
   render.js          the card and the holding page, five languages
   html.js            escaping and the accent palettes
 
@@ -300,8 +318,6 @@ Google separately from the in-app button. `src/screens/SignIn.tsx` links the fir
 
 ## Not done yet
 
-- **Photos.** The function streams them from Storage and the renderer draws them, but the
-  app has no upload screen and the fields are not in the database. Cards show an initial.
 - **Page view counts.** The chip counts its own reads; the page counts nothing.
 - **vCard.** "Save contact" existed on the old Worker; deliberately deferred.
 - **Android has never been run.** It builds and the bundle is signed, but no one has opened

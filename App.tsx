@@ -16,19 +16,21 @@ import {useCallback, useEffect, useState} from 'react';
 import {
   ActivityIndicator,
   Image,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
   Text,
   View,
 } from 'react-native';
+import * as SplashScreen from 'expo-splash-screen';
 import {StatusBar} from 'expo-status-bar';
 import {SafeAreaProvider, useSafeAreaInsets} from 'react-native-safe-area-context';
 import NfcManager from 'react-native-nfc-manager';
 
 import {leave, watchAccount, type Account} from './src/account';
 import {isAdmin} from './src/cards';
-import {LANGS, useLang} from './src/i18n';
+import {LANG_NAMES, LANGS, useLang} from './src/i18n';
 import {ChipTools} from './src/screens/ChipTools';
 import {MyCard} from './src/screens/MyCard';
 import {SignIn} from './src/screens/SignIn';
@@ -37,6 +39,17 @@ import {C, s} from './src/theme';
 
 type Tab = 'card' | 'chips';
 
+/*
+ * Hold the native splash past the first frame. Firebase restores the session a moment
+ * after the UI mounts, so without this the launch is three pictures — splash, a spinner
+ * on an empty screen, then the card — where one will do.
+ *
+ * The hide below is guarded by a timer as well as by the session, because a splash that
+ * is never hidden is an app that never starts.
+ */
+SplashScreen.preventAutoHideAsync().catch(() => {});
+const done = () => SplashScreen.hideAsync().catch(() => {});
+
 function Screen() {
   const insets = useSafeAreaInsets();
   const {lang, setLang, t} = useLang();
@@ -44,6 +57,16 @@ function Screen() {
   const [ready, setReady] = useState(false);
   const [nfcReady, setNfcReady] = useState(false);
   const [tab, setTab] = useState<Tab>('card');
+  const [langOpen, setLangOpen] = useState(false);
+
+  useEffect(() => {
+    if (ready) {
+      done();
+      return;
+    }
+    const late = setTimeout(done, 4000);
+    return () => clearTimeout(late);
+  }, [ready]);
 
   useEffect(() => {
     const stop = watchAccount(a => {
@@ -124,13 +147,14 @@ function Screen() {
           <Text style={s.title}>OnlyMaxon</Text>
 
           <View style={s.headerRight}>
-            {LANGS.map(l => (
-              <Pressable key={l} onPress={() => setLang(l)} hitSlop={8}>
-                <Text style={[s.langCode, lang === l ? s.langActive : null]}>
-                  {l.toUpperCase()}
-                </Text>
-              </Pressable>
-            ))}
+            <Pressable
+              style={s.langButton}
+              hitSlop={6}
+              accessibilityLabel={t('language')}
+              onPress={() => setLangOpen(true)}>
+              <Text style={s.langCode}>{lang.toUpperCase()}</Text>
+              <Text style={s.langCaret}>▼</Text>
+            </Pressable>
             {account ? (
               <Pressable onPress={leave} hitSlop={10}>
                 <Text style={s.link}>{t('signOut')}</Text>
@@ -141,6 +165,35 @@ function Screen() {
 
         {body}
       </ScrollView>
+
+      {/* The list, over everything. A Modal rather than an absolutely positioned View
+          because the header sits inside the ScrollView: anything drawn there is clipped by
+          it and scrolls away under the finger that opened it. */}
+      <Modal
+        visible={langOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setLangOpen(false)}>
+        <Pressable style={s.sheetBack} onPress={() => setLangOpen(false)}>
+          {/* Pressable, not View: without an onPress of its own a tap on the padding
+              between rows falls through to the backdrop and shuts the list. */}
+          <Pressable style={[s.sheet, {top: insets.top + 62}]} onPress={() => {}}>
+            {LANGS.map(l => (
+              <Pressable
+                key={l}
+                style={s.sheetRow}
+                onPress={() => {
+                  setLang(l);
+                  setLangOpen(false);
+                }}>
+                <Text style={[s.sheetText, lang === l ? s.langActive : null]}>
+                  {LANG_NAMES[l]}
+                </Text>
+              </Pressable>
+            ))}
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }

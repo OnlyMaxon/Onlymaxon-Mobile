@@ -140,13 +140,27 @@ letter-spacing:1.1px;text-transform:uppercase;text-decoration:none}
  */
 function avatar(c) {
   if (!c.photoPath) return `<div class="ava" aria-hidden="true">${esc(initials(c.name))}</div>`;
+  // Defaulted rather than read straight off the document. A card whose picture was set
+  // before these fields existed has no photoX, and `50 - undefined` is NaN, which reaches
+  // the page as `translate(NaN%,NaN%)` and takes the whole photo down with it.
+  const num = (v, fallback) => (typeof v === 'number' && isFinite(v) ? v : fallback);
+  const scale = num(c.photoScale, 1);
+  const x = num(c.photoX, 50);
+  const y = num(c.photoY, 50);
   const moves = [];
-  if (c.photoScale && c.photoScale !== 1) moves.push(`scale(${c.photoScale})`);
-  if (c.photoX !== 50 || c.photoY !== 50)
-    moves.push(`translate(${(50 - c.photoX).toFixed(1)}%,${(50 - c.photoY).toFixed(1)}%)`);
+  if (scale !== 1) moves.push(`scale(${scale})`);
+  if (x !== 50 || y !== 50)
+    moves.push(`translate(${(50 - x).toFixed(1)}%,${(50 - y).toFixed(1)}%)`);
   const zoom = moves.length ? ` style="transform:${moves.join(' ')}"` : '';
-  return `<div class="ava pic"><img src="/${escAttr(c.slug)}/photo" alt="${escAttr(c.name)}" ` +
-         `width="82" height="82"${zoom}></div>`;
+  /*
+   * The hash of the file rides in the query string, and that is what earns the `immutable`
+   * the route sends back. Storage is content-addressed, but /<slug>/photo is not: without
+   * this the address of the picture never changes, so anybody who had loaded the old one
+   * would keep being shown it by their own browser for a year after it was replaced.
+   */
+  const v = c.photoPath.split('/').pop().replace(/\.[a-z]+$/i, '');
+  return `<div class="ava pic"><img src="/${escAttr(c.slug)}/photo?v=${escAttr(v)}" ` +
+         `alt="${escAttr(c.name)}" width="82" height="82"${zoom}></div>`;
 }
 
 export function cardPage(c, services, links) {

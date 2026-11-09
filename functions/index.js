@@ -9,6 +9,10 @@
  * Paths:
  *   /<slug>         the card
  *   /<slug>/photo   the avatar, streamed from Storage so the bucket can stay private
+ *
+ * Putting a picture there is a different job with a different shape — authenticated, write
+ * only, no HTML — and lives in `photo.js` as its own function. `initializeApp` happens here
+ * and only here, so that module is imported for its side effect of being exported.
  */
 
 import {onRequest} from 'firebase-functions/v2/https';
@@ -20,6 +24,8 @@ import {cardPage, holdingPage} from './render.js';
 
 initializeApp();
 const db = getFirestore();
+
+export {photo} from './photo.js';
 
 const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,38}$/;
 

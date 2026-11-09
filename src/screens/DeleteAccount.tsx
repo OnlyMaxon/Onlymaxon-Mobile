@@ -19,6 +19,7 @@ import {ActivityIndicator, Pressable, Text, TextInput, View} from 'react-native'
 
 import {authErrorKey, erase, prove} from '../account';
 import {release, type Card} from '../cards';
+import {removePhoto} from '../photo';
 import type {Key} from '../i18n';
 import {C, s} from '../theme';
 
@@ -51,6 +52,16 @@ export function DeleteAccount({
       // Cards still waiting for this address are not ours to touch: nobody has claimed
       // them, and releasing one would mean editing a card this account does not own.
       for (const card of (cards ?? []).filter(c => c.ownerUid === uid)) {
+        /*
+         * The face comes off before the card does, and the file itself is deleted — the
+         * person asked to be erased, and a picture of them sitting in a bucket is not
+         * erased. Failure here is swallowed on purpose: release() blanks `photoPath`
+         * either way, so the page stops showing them even if this call did not land, and
+         * a deletion that refuses to finish is worse than a file left behind.
+         */
+        if (card.photoPath) {
+          await removePhoto(card.id).catch(() => {});
+        }
         await release(card);
       }
 

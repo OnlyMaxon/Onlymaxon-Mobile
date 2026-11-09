@@ -48,6 +48,12 @@ export type Card = {
   services: Service[];
   links: Link[];
   published: boolean;
+  /*
+   * Where the picture lives in the bucket, or empty for none. Read here and never written:
+   * the `photo` function owns this field, and firestore.rules refuses any client write that
+   * changes it. The public page falls back to the first letter of the name when it is empty.
+   */
+  photoPath: string;
 };
 
 export const ACCENTS = ['studio', 'amber', 'rose', 'cyan'] as const;
@@ -109,6 +115,7 @@ function fromDoc(id: string, d: Record<string, unknown>): Card {
     services: Array.isArray(d.services) ? (d.services as Service[]) : [],
     links: Array.isArray(d.links) ? (d.links as Link[]) : [],
     published: d.published === true,
+    photoPath: String(d.photoPath ?? ''),
   };
 }
 
@@ -218,6 +225,13 @@ export async function release(card: Card): Promise<void> {
     services: [],
     links: [],
     published: false,
+    /*
+     * Written unconditionally, not only when there was a picture. The file itself is
+     * deleted first, by the photo function; this is what makes the page stop pointing at a
+     * face if that call did not get through. The rule for this branch requires it to be
+     * empty, so a deletion that forgot it would be refused rather than half-done.
+     */
+    photoPath: '',
     updatedAt: serverTimestamp(),
   });
 }

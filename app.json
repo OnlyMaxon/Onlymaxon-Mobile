@@ -3,7 +3,7 @@
     "name": "OnlyMaxon",
     "slug": "onlymaxon-cards",
     "owner": "onlymaxons-team",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "maxoncards",
@@ -11,7 +11,7 @@
     "backgroundColor": "#06080C",
     "ios": {
       "bundleIdentifier": "com.onlymaxon.cards",
-      "buildNumber": "7",
+      "buildNumber": "9",
       "supportsTablet": false,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
@@ -20,7 +20,7 @@
     },
     "android": {
       "package": "com.onlymaxon.nfc",
-      "versionCode": 8,
+      "versionCode": 11,
       "predictiveBackGestureEnabled": false,
       "adaptiveIcon": {
         "backgroundColor": "#06080C",
@@ -51,7 +51,31 @@
             "useFrameworks": "dynamic"
           },
           "android": {
-            "kotlinVersion": "2.4.20"
+            "kotlinVersion": "2.4.20",
+            "enableMinifyInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true,
+            "extraProguardRules": "-keep class community.revteltech.nfc.** { *; }"
+          }
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "OnlyMaxon needs your photo library so you can choose the picture that appears on your card.",
+          "cameraPermission": "OnlyMaxon needs the camera so you can take the picture that appears on your card.",
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#06080C",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 220,
+          "dark": {
+            "backgroundColor": "#06080C",
+            "image": "./assets/splash-icon.png",
+            "imageWidth": 220
           }
         }
       ]

@@ -31,6 +31,42 @@ export const s = StyleSheet.create({
   headerRight: {marginLeft: 'auto', flexDirection: 'row', alignItems: 'center', gap: 12},
   langCode: {color: C.dim, fontSize: 13, fontWeight: '600', letterSpacing: 0.5},
   langActive: {color: C.accent},
+
+  /* The language control. A row of codes fitted while there were two languages; at three it
+   * crowds the sign-out link, so it is one button that opens a list instead. */
+  langButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 9,
+    borderWidth: 1,
+    borderColor: C.line,
+  },
+  langCaret: {color: C.dim, fontSize: 9, marginTop: 1},
+  sheetBack: {flex: 1},
+  sheet: {
+    position: 'absolute',
+    right: 22,
+    minWidth: 160,
+    backgroundColor: C.card,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: C.line,
+    paddingVertical: 6,
+  },
+  sheetRow: {paddingVertical: 11, paddingHorizontal: 16},
+  sheetText: {color: C.text, fontSize: 15},
+
+  /* The photo block. The preview is the same circle the public page draws, at the size it
+   * is actually looked at, so what is chosen here is what gets seen. */
+  photoRow: {flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 14},
+  photoPreview: {width: 72, height: 72, borderRadius: 36, backgroundColor: C.card},
+  photoEmpty: {alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: C.line},
+  photoLetter: {color: C.dim, fontSize: 28, fontWeight: '600'},
+  photoButtons: {flex: 1, gap: 8},
+
   title: {color: C.text, fontSize: 26, fontWeight: '600', letterSpacing: -0.4},
   spin: {marginTop: 24},
 

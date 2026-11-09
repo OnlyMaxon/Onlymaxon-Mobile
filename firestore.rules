@@ -69,11 +69,18 @@ service cloud.firestore {
       allow update: if
         // The owner editing their own card. They may not hand it to somebody else, and
         // they may not change the slug — it is printed on plastic that cannot be reissued.
+        //
+        // photoPath is on that list too, for a sharper reason: it is a path into the
+        // storage bucket. An owner who could write it freely could point their own card at
+        // any object in it — another client's face, served under their own name. Only the
+        // `photo` function sets it, with admin rights, after hashing the bytes it was
+        // handed. The editor sends every other field and leaves this one exactly as found.
         (owns(resource.data)
           && verified()
           && request.resource.data.ownerUid == resource.data.ownerUid
           && request.resource.data.ownerEmail == resource.data.ownerEmail
-          && request.resource.data.slug == resource.data.slug)
+          && request.resource.data.slug == resource.data.slug
+          && request.resource.data.get('photoPath', '') == resource.data.get('photoPath', ''))
 
         // Or the claim: an unclaimed card, taken by the verified address it was made for.
         // The only field this is allowed to set is the owner.
@@ -87,11 +94,18 @@ service cloud.firestore {
         // the row has to survive, because the slug is printed on plastic. Verification is
         // deliberately not required here: somebody must always be able to delete their
         // account, confirmed address or not.
+        //
+        // This branch is the one place a client may write photoPath, and only to empty it.
+        // Letting go of a card has to take the face off it: the slug stays printed on
+        // plastic, the row stays, and a stranger tapping it must not meet the person who
+        // just asked to be erased. The app deletes the file itself first; this makes the
+        // page stop pointing at it even if that call did not get through.
         || (owns(resource.data)
           && request.resource.data.ownerUid == null
           && request.resource.data.ownerEmail == resource.data.ownerEmail
           && request.resource.data.slug == resource.data.slug
-          && request.resource.data.published == false);
+          && request.resource.data.published == false
+          && request.resource.data.get('photoPath', '') == '');
 
       // Nothing deletes a card. The URL is on a physical object: deleting the row would
       // turn a card in somebody's pocket into a 404 with no way to tell from looking at it.
