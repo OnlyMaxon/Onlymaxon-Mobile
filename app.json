@@ -11,7 +11,7 @@
     "backgroundColor": "#06080C",
     "ios": {
       "bundleIdentifier": "com.onlymaxon.cards",
-      "buildNumber": "9",
+      "buildNumber": "10",
       "supportsTablet": false,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
@@ -20,7 +20,7 @@
     },
     "android": {
       "package": "com.onlymaxon.nfc",
-      "versionCode": 11,
+      "versionCode": 12,
       "predictiveBackGestureEnabled": false,
       "adaptiveIcon": {
         "backgroundColor": "#06080C",
