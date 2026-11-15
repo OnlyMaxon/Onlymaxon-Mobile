@@ -28,6 +28,14 @@ const db = getFirestore(getApp());
 /** The same rule the slug input enforces, and the one the public URL depends on. */
 export const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,38}$/;
 
+/*
+ * Cards live on their own hostname. The site is a static build on GitHub Pages and a card
+ * is a row in a database — one domain serving both means one of them has to bend. This is
+ * also the address printed into the chip, so it cannot change once cards are handed out,
+ * and it is why it is one constant rather than a string written out wherever it is needed.
+ */
+export const BASE_URL = 'https://cards.onlymaxon.com/';
+
 export type Service = {name: string; price: string};
 export type Link = {label: string; url: string};
 

@@ -175,6 +175,61 @@ export const s = StyleSheet.create({
   verdictText: {fontSize: 14, lineHeight: 20},
 
   /*
+   * The card face — MagicCard.
+   *
+   * The plastic is 85.6 × 54 mm and matte black, so the face is that ratio and these
+   * near-blacks rather than C.card: a surface meant to read as the object in the client's
+   * pocket, not as another panel of the app. The only light on it is one hairline along the
+   * top edge and the sweep, which is clipped by `overflow` here.
+   */
+  magic: {
+    aspectRatio: 1.585,
+    marginTop: 20,
+    padding: 20,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#15191D',
+    backgroundColor: '#0A0C0E',
+    justifyContent: 'space-between',
+    overflow: 'hidden',
+  },
+  magicEdge: {
+    position: 'absolute',
+    top: 0,
+    left: 16,
+    right: 16,
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.07)',
+  },
+  magicSheen: {position: 'absolute', left: 0, width: 64, backgroundColor: 'rgba(255,255,255,0.05)'},
+
+  magicHead: {flexDirection: 'row', alignItems: 'center', gap: 14},
+  magicPhoto: {width: 52, height: 52, borderRadius: 26, backgroundColor: '#101418'},
+  magicPhotoEmpty: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#1C2228',
+  },
+  magicLetter: {fontSize: 22, fontWeight: '600'},
+  magicWho: {flex: 1, gap: 3},
+  magicName: {color: '#F1F7F9', fontSize: 20, fontWeight: '600', letterSpacing: -0.3},
+  magicRole: {color: '#8296A0', fontSize: 13},
+
+  magicFoot: {flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between'},
+  magicRule: {width: 26, height: 2, borderRadius: 2, marginBottom: 8},
+  magicSlug: {color: '#6D7C84', fontSize: 11, fontFamily: mono, letterSpacing: 0.4},
+  magicMark: {width: 26, height: 19, opacity: 0.45},
+
+  magicCaption: {
+    color: C.dim,
+    fontSize: 12,
+    letterSpacing: 0.6,
+    textAlign: 'center',
+    marginTop: 12,
+  },
+
+  /*
    * A tappable link under something else tappable.
    *
    * The margin belongs on the pressable, not on the text inside it: with it on the text,

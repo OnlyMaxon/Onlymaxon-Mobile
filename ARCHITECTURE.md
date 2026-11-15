@@ -290,7 +290,8 @@ src/
   screens/
     SignIn.tsx       register or sign in — one screen, because it is one act
     Verify.tsx       waiting for a confirmed address
-    MyCard.tsx       what the client opens: their card and the form
+    MyCard.tsx       what the client opens: the card, and the form behind a button
+    MagicCard.tsx    the card face, drawn and dealt once per launch
     DeleteAccount.tsx  getting rid of an account without killing the card behind it
     ChipTools.tsx    the bench: read, write, erase (admins only)
 

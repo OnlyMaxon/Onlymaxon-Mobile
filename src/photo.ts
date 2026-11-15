@@ -20,6 +20,7 @@ import * as ImagePicker from 'expo-image-picker';
 import {ImageManipulator, SaveFormat} from 'expo-image-manipulator';
 
 import {auth} from './account';
+import {BASE_URL} from './cards';
 import type {Key} from './i18n';
 
 /** Four times the 82 CSS pixels the page draws, which covers every phone's pixel ratio. */
@@ -123,5 +124,5 @@ export async function removePhoto(cardId: string): Promise<void> {
  *  a new address — see the note beside `avatar()` in functions/render.js. */
 export function photoUrl(slug: string, photoPath: string): string {
   const v = photoPath.split('/').pop()?.replace(/\.[a-z]+$/i, '') ?? '';
-  return `https://cards.onlymaxon.com/${slug}/photo?v=${v}`;
+  return `${BASE_URL}${slug}/photo?v=${v}`;
 }

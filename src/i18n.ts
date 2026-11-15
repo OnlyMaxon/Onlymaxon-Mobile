@@ -106,6 +106,18 @@ const DICT = {
   takeCard: {ru: 'Забрать карточку', en: 'Claim this card', pl: 'Odbierz wizytówkę'},
   myCard: {ru: 'Моя карточка', en: 'My card', pl: 'Moja wizytówka'},
 
+  /* The name under the card. A product name, so it is the same in all three — it lives here
+   * anyway, because a string that exists in one place cannot drift. */
+  magicCard: {ru: 'MagicCard V1', en: 'MagicCard V1', pl: 'MagicCard V1'},
+  viewCard: {ru: 'Просмотреть', en: 'View', pl: 'Podgląd'},
+  editCard: {ru: 'Изменить', en: 'Edit', pl: 'Edytuj'},
+  viewHint: {
+    ru: 'Откроется та самая страница, которую видит человек, приложивший карту.',
+    en: 'This opens the very page somebody sees when they tap the card.',
+    pl: 'Otworzy się ta sama strona, którą widzi ktoś, kto zbliży kartę.',
+  },
+  backToCard: {ru: 'Назад к карточке', en: 'Back to the card', pl: 'Wróć do wizytówki'},
+
   // ── the photo ──
   photo: {ru: 'Фото', en: 'Photo', pl: 'Zdjęcie'},
   photoHint: {

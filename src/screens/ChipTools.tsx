@@ -21,6 +21,7 @@ import {
 import NfcManager from 'react-native-nfc-manager';
 
 import {
+  BASE_URL,
   SLUG_RE,
   SlugTaken,
   chipOf,
@@ -49,13 +50,6 @@ import {
 import {C, s} from '../theme';
 
 type T = (k: Key, v?: Record<string, string | number>) => string;
-
-/*
- * Cards live on their own hostname. The site is a static build on GitHub Pages and a card
- * is a row in a database — one domain serving both means one of them has to bend. This is
- * also the address printed into the chip, so it cannot change once cards are handed out.
- */
-const BASE_URL = 'https://cards.onlymaxon.com/';
 
 /* Pulls the slug back out of whatever the chip is carrying, so a tap can be turned into
  * "whose card is this". The old /u/ form is still recognised: chips written before the move

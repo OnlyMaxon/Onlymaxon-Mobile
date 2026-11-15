@@ -10,6 +10,7 @@ import {useCallback, useEffect, useState} from 'react';
 import {
   ActivityIndicator,
   Image,
+  Linking,
   Pressable,
   Switch,
   Text,
@@ -20,6 +21,7 @@ import {
 import type {Account} from '../account';
 import {
   ACCENTS,
+  BASE_URL,
   LANGS,
   LIMITS,
   claim,
@@ -33,6 +35,7 @@ import type {Key} from '../i18n';
 import {PhotoRefused, choosePhoto, photoUrl, removePhoto, setPhoto} from '../photo';
 import {C, s} from '../theme';
 import {DeleteAccount} from './DeleteAccount';
+import {MagicCard} from './MagicCard';
 
 type T = (k: Key, v?: Record<string, string | number>) => string;
 
@@ -279,6 +282,7 @@ export function MyCard({account, t}: {account: Account; t: T}) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [editing, setEditing] = useState(false);
 
   const load = useCallback(async () => {
     setError(null);
@@ -324,6 +328,8 @@ export function MyCard({account, t}: {account: Account; t: T}) {
       try {
         await save(next.id, next);
         setDraft(next);
+        // The card screen draws this list, not the draft, so it has to move with the save.
+        setCards(cs => (cs ?? []).map(c => (c.id === next.id ? next : c)));
         setSaved(true);
       } catch (e) {
         setError(e instanceof Error ? e.message : String(e));
@@ -378,30 +384,105 @@ export function MyCard({account, t}: {account: Account; t: T}) {
     setSaved(false);
   };
 
+  /*
+   * What the card screen draws: the saved card, never the draft.
+   *
+   * Typed-but-unsaved text stays in the editor where it was typed — the draft is not thrown
+   * away by leaving — but the card beside a "View" button that opens the real page has to be
+   * the same card that page shows. Drawing the draft here would put a name on the plastic
+   * that nobody tapping the chip can see.
+   */
+  const live = cards.find(c => c.id === draft.id) ?? draft;
+
+  // A photo is on the server by the time it can be shown, so both copies take it at once.
+  const photoSaved = (photoPath: string) => {
+    setDraft({...draft, photoPath});
+    setCards(cs => (cs ?? []).map(c => (c.id === draft.id ? {...c, photoPath} : c)));
+  };
+
+  /*
+   * The card, and the form behind a button.
+   *
+   * All of this used to open at once, so the first thing the owner of a card saw was seven
+   * text fields. The card is the thing they came to look at; editing it is something they
+   * do now and then.
+   *
+   * The hidden banner is on both screens. A card nobody can see is the one failure that
+   * looks like success, and a warning one tap deep is a warning nobody reads.
+   */
+  const hidden = !live.published ? (
+    <View style={[s.verdict, {borderColor: C.warn}]}>
+      <Text style={[s.verdictText, {color: C.warn}]}>{t('hiddenBanner')}</Text>
+      {busy ? null : (
+        <Pressable style={[s.primary, s.spacedSmall]} onPress={() => store(true)}>
+          <Text style={s.primaryText}>{t('publishAndSave')}</Text>
+        </Pressable>
+      )}
+    </View>
+  ) : null;
+
+  if (!editing) {
+    return (
+      <View>
+        {hidden}
+
+        <MagicCard card={live} t={t} />
+
+        {/* The system browser, on the real address, rather than a second drawing of the
+            page inside the app: what opens here is what the next person to tap the chip
+            gets, and it cannot drift away from it. */}
+        <Pressable
+          style={[s.primary, s.spaced]}
+          onPress={() => Linking.openURL(`${BASE_URL}${live.slug}`)}>
+          <Text style={s.primaryText}>{t('viewCard')}</Text>
+        </Pressable>
+        <Pressable style={s.secondary} onPress={() => setEditing(true)}>
+          <Text style={s.secondaryText}>{t('editCard')}</Text>
+        </Pressable>
+        <Text style={[s.hint, {textAlign: 'center'}]}>{t('viewHint')}</Text>
+
+        {error ? <Text style={s.error}>{error}</Text> : null}
+
+        {cards.length > 1 ? (
+          <View style={s.spaced}>
+            <Text style={s.blockText}>{t('otherCards')}</Text>
+            {cards
+              .filter(c => c.id !== draft.id)
+              .map(c => (
+                <Pressable key={c.id} onPress={() => setDraft(c)} hitSlop={8}>
+                  <Text style={[s.link, {marginTop: 8}]}>cards/{c.slug}</Text>
+                </Pressable>
+              ))}
+          </View>
+        ) : null}
+
+        {/* Deleting an account stays on this screen instead of moving into the editor with
+            the rest of the form: both stores want it findable, and one tap deeper is one
+            tap less findable. */}
+        <DeleteAccount uid={account.uid} email={account.email} cards={cards} t={t} />
+      </View>
+    );
+  }
+
   return (
     <View>
-      <View style={s.passwordRow}>
+      {/* Margin on the pressable, not on the text — see s.linkRow. */}
+      <Pressable
+        style={{paddingVertical: 6, alignSelf: 'flex-start'}}
+        onPress={() => setEditing(false)}>
+        <Text style={s.link}>← {t('backToCard')}</Text>
+      </Pressable>
+
+      <View style={[s.passwordRow, s.spacedSmall]}>
         <Text style={s.blockLabel}>{t('myCard')}</Text>
         <Text style={[s.rowValue, {fontSize: 13, color: C.dim}]}>cards/{draft.slug}</Text>
       </View>
 
-      {/* A card nobody can see is the one failure that looks like success: everything was
-          typed, everything was saved, and the chip still opens a holding page. The switch
-          for it sits at the bottom of a long form, so the state is said at the top. */}
-      {!draft.published ? (
-        <View style={[s.verdict, {borderColor: C.warn}]}>
-          <Text style={[s.verdictText, {color: C.warn}]}>{t('hiddenBanner')}</Text>
-          {busy ? null : (
-            <Pressable style={[s.primary, s.spacedSmall]} onPress={() => store(true)}>
-              <Text style={s.primaryText}>{t('publishAndSave')}</Text>
-            </Pressable>
-          )}
-        </View>
-      ) : null}
+      {hidden}
 
       {/* Above the name, because that is where it sits on the card itself. The letter the
           circle falls back to is the first letter of the name, so the two belong together. */}
-      <Photo card={draft} onChange={p => setDraft({...draft, photoPath: p})} t={t} />
+      <Photo card={draft} onChange={photoSaved} t={t} />
 
       <Field label={t('fName')} value={draft.name} onChange={v => set('name', v)} max={LIMITS.name} placeholder={t('phName')} />
       <Field label={t('fRole')} value={draft.role} onChange={v => set('role', v)} max={LIMITS.role} placeholder={t('phRole')} />
@@ -478,20 +559,9 @@ export function MyCard({account, t}: {account: Account; t: T}) {
       ) : null}
       {error ? <Text style={s.error}>{error}</Text> : null}
 
-      {cards.length > 1 ? (
-        <View style={s.spaced}>
-          <Text style={s.blockText}>{t('otherCards')}</Text>
-          {cards
-            .filter(c => c.id !== draft.id)
-            .map(c => (
-              <Pressable key={c.id} onPress={() => setDraft(c)} hitSlop={8}>
-                <Text style={[s.link, {marginTop: 8}]}>cards/{c.slug}</Text>
-              </Pressable>
-            ))}
-        </View>
-      ) : null}
-
-      <DeleteAccount uid={account.uid} email={account.email} cards={cards} t={t} />
+      <Pressable style={s.linkRow} onPress={() => setEditing(false)}>
+        <Text style={s.link}>← {t('backToCard')}</Text>
+      </Pressable>
     </View>
   );
 }
