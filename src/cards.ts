@@ -388,7 +388,17 @@ export async function logChip(
     error?: string;
   },
 ): Promise<void> {
-  await addDoc(collection(db, 'chipWrites'), {
+  /*
+   * Under the chip, not beside it: `chips/<uid>/writes/...`. A sixth collection at the top
+   * level is a thing somebody has to recognise before they can ignore it, and the console
+   * is read by a person at a bench, not by a query planner. Here the history is where you
+   * are already looking — open a chip, see everything that ever happened to it.
+   *
+   * A write that failed before the chip answered has no UID to file itself under, and those
+   * are the ones worth keeping most. They go under `_unverified`, which is a chip id that
+   * cannot exist: a UID is seven bytes of hex and never starts with an underscore.
+   */
+  await addDoc(collection(db, 'chips', entry.uid || '_unverified', 'writes'), {
     ...entry,
     ...who(),
     ...ENV,

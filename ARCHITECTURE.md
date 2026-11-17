@@ -84,8 +84,8 @@ app: slug + client's email
   │      in a transaction with slugs/<slug>, so two people can never get the same address
   │
   └─▶ chip:  NDEF url → read it back → PWD → PACK → prove it → ACCESS → AUTH0
-         then Firestore: chips/<chipUid>   = the current state of that piece of plastic
-                         chipWrites/<auto> = the same, appended, never overwritten
+         then Firestore: chips/<chipUid>            = the state of that piece of plastic
+                         chips/<chipUid>/writes/... = its history, appended, never edited
 ```
 
 **Database first, chip second, always.** If Firestore refuses, the chip is untouched and the
@@ -168,9 +168,21 @@ to whoever is typing; these are the rule.
 | `cards` | the owner, the address it waits for, admins | the owner (slug and ownerEmail frozen; ownerUid only to null, which is the release); admins create |
 | `slugs` | admins | admins, create-only — this is the uniqueness lock |
 | `chips` | admins | admins |
-| `chipWrites` | admins | admins — create only, no update, no delete |
+| `chips/<uid>/writes` | admins | admins — create only, no update, no delete |
 | `batches` | admins | admins |
 | everything else | nobody | nobody |
+
+### What is in the database, and nothing else is
+
+Four collections. Anything not in this list does not exist, and a fifth one appearing is a
+bug or a leftover, not a feature.
+
+| | id | what it is | who reads it in the console |
+|---|---|---|---|
+| `cards` | random | the card itself: slug, owner, and everything a visitor sees | the renderer, through the Admin SDK |
+| `slugs` | the slug | the uniqueness lock, one empty-ish document per address ever issued. Never deleted — a slug is printed on plastic and must never be handed out twice | nobody, ever |
+| `chips` | the chip's factory UID | the current state of one piece of plastic: which card, which batch password, how it was configured, who wrote it and with which build. Its `writes` subcollection is that chip's whole history, failures included | us, when a chip misbehaves |
+| `batches` | the password's own hex | every batch password ever used, so a chip from an older batch is never a guessing game | us, when a chip asks for a password we do not have in hand |
 
 **No public read on cards, even published ones.** A document holds `ownerEmail` and
 `ownerUid` next to the public fields, and a rule cannot hand over half a document. The page

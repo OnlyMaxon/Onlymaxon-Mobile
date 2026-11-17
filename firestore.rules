@@ -126,10 +126,11 @@ service cloud.firestore {
     }
 
     /*
-     * Every attempt on every chip, in order, and nobody may edit the past.
+     * Every attempt on one chip, in order, and nobody may edit the past.
      *
-     * `chips` above is the current state of a piece of plastic and is overwritten by design.
-     * This is the history, and it exists because the state document once quietly disagreed
+     * A subcollection rather than a collection of its own, because the console is read by a
+     * person: the history belongs inside the chip it is about. The document above is the
+     * current state of a piece of plastic and is overwritten by design. This is the history, and it exists because the state document once quietly disagreed
      * with the chip it described: the write that corrected it never reached the database,
      * the failure was swallowed, and a card already in somebody's pocket was left carrying
      * a password that nothing on record could open.
@@ -137,7 +138,7 @@ service cloud.firestore {
      * Create only. A log that can be updated is a log that can be made to say the write
      * went fine.
      */
-    match /chipWrites/{entryId} {
+    match /chips/{chipUid}/writes/{entryId} {
       allow get, list: if admin();
       allow create: if admin();
       allow update, delete: if false;

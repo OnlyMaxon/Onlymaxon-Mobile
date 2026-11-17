@@ -227,7 +227,13 @@ function PasswordBlock({
       setError(null);
     } catch (e) {
       const code = e instanceof Error ? e.message : String(e);
-      setError(code === 'bad-batch-password' ? t('errBatchFormat') : code);
+      setError(
+        code === 'bad-batch-password'
+          ? t('errBatchFormat')
+          : code === 'factory-batch-password'
+            ? t('errBatchFactory')
+            : code,
+      );
     }
   }, [draft, onCreated, t]);
 
@@ -660,7 +666,12 @@ export function ChipTools({nfcReady, t}: {nfcReady: boolean; t: T}) {
             url: o.url,
             batchHex: passwordHex(o.password),
             outcome: 'failed',
-            error: e instanceof CardError ? e.code : String(e instanceof Error ? e.message : e),
+            // Never an empty string: a cancelled NFC session on iOS arrives as an Error
+            // with no message, and "failed, error: ''" is a line that answers nothing.
+            error:
+              e instanceof CardError
+                ? e.code
+                : (e instanceof Error ? e.message || e.name : String(e)) || 'no-message',
           }).catch(() => {});
           throw e;
         }

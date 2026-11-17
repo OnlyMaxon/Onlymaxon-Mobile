@@ -54,12 +54,24 @@ export async function createPassword(): Promise<BatchPassword> {
   return store(fromBytes(bytes));
 }
 
-/** For moving a batch to a second phone, or restoring after a reinstall. */
+/*
+ * For moving a batch to a second phone, or restoring after a reinstall.
+ *
+ * The factory password is refused here as well as never generated above. It is a legitimate
+ * thing to type once — a chip protected with it is opened with it, and that is how a chip
+ * whose password never committed gets rescued — but it must not survive in the keychain
+ * afterwards, because the next card written would be "protected" with the value every NFC
+ * app on earth tries first. It stayed in a phone for an evening once, and the next write
+ * recorded it as that batch's password.
+ */
 export async function importPassword(input: string): Promise<BatchPassword> {
   const clean = input.replace(/[^0-9a-fA-F]/g, '').toUpperCase();
   if (clean.length !== 12) {
     throw new Error('bad-batch-password');
   }
   const bytes = (clean.match(/../g) as string[]).map(h => parseInt(h, 16));
+  if (bytes.slice(0, 4).every(b => b === 0xff)) {
+    throw new Error('factory-batch-password');
+  }
   return store(fromBytes(bytes));
 }

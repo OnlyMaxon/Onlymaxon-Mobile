@@ -500,6 +500,11 @@ const DICT = {
     en: 'The chip is written and correct, but the database did not hear about it. Save this by hand: UID {uid}, batch password {hex}.',
     pl: 'Chip jest zapisany poprawnie, ale baza się o tym nie dowiedziała. Zapisz ręcznie: UID {uid}, hasło partii {hex}.',
   },
+  errBatchFactory: {
+    ru: 'Это заводской пароль — им нельзя защищать карты, его знает любое NFC-приложение. Открыть им чип можно, сохранить как пароль партии — нет.',
+    en: 'That is the factory password. A chip protected with it is protected from nobody — every NFC app tries it first. It can open a chip, but it cannot be kept as a batch password.',
+    pl: 'To hasło fabryczne — nim nie wolno chronić kart, zna je każda aplikacja NFC. Można nim otworzyć chip, ale nie zapisać jako hasło partii.',
+  },
   errBatchFormat: {
     ru: 'Пароль партии — 12 символов (0-9, A-F).',
     en: 'A batch password is 12 characters (0-9, A-F).',
