@@ -126,8 +126,21 @@ function parseConfig(cfg0: number[], cfg1: number[]): Protection {
   };
 }
 
-/* Everything readable about the card, inside a session somebody else opened. */
-async function inspect(): Promise<CardRead> {
+/*
+ * Everything readable about the card, inside a session somebody else opened.
+ *
+ * `counter: false` leaves the tap counter unread, and every call that is followed by
+ * PWD_AUTH has to pass it. The counter is the one read here that can be refused — the chip
+ * answers READ_CNT only on its own terms — and on iOS a refused command takes the
+ * connection to the tag with it. The next command then fails for a reason that has nothing
+ * to do with what it asked.
+ *
+ * That is not theory. It is why erasing a chip we had just written said "protected with a
+ * different password": the counter was switched on by that write, reading it was refused,
+ * and the authentication behind it never got a real answer. Two chips were written off as
+ * lost over it. Nothing optional goes to a chip before a password does.
+ */
+async function inspect(opts?: {counter?: boolean}): Promise<CardRead> {
   // Pages 0-3 in one read: the UID spans pages 0 and 1, byte 3 of page 0 being a checksum
   // rather than UID, then the capability container on page 3.
   const head = await send([CMD.READ, 0x00]);
@@ -151,8 +164,12 @@ async function inspect(): Promise<CardRead> {
   const protection =
     cfg && cfg.length >= 8 ? parseConfig(cfg.slice(0, 4), cfg.slice(4, 8)) : null;
 
-  // Three bytes, least significant first. Answered only when NFC_CNT_EN is set.
-  const cnt = protection?.counterEnabled ? await trySend([CMD.READ_CNT, 0x00]) : null;
+  // Three bytes, least significant first. Answered only when NFC_CNT_EN is set — and not
+  // always then, which is why it is the last thing read and the first thing skipped.
+  const cnt =
+    opts?.counter !== false && protection?.counterEnabled
+      ? await trySend([CMD.READ_CNT, 0x00])
+      : null;
   const taps = cnt && cnt.length >= 3 ? cnt[0] | (cnt[1] << 8) | (cnt[2] << 16) : null;
 
   return {
@@ -235,7 +252,8 @@ export async function writeCard(opts: {
   const {url, password, enableCounter} = opts;
 
   return withCard(opts.prompt, async () => {
-    const before = await inspect();
+    // No counter read before the authentication below. See inspect().
+    const before = await inspect({counter: false});
 
     if (before.protection?.configLocked) {
       throw new CardError('config-locked');
@@ -340,7 +358,8 @@ export async function writeCard(opts: {
  */
 export async function eraseCard(password: BatchPassword, prompt: string): Promise<CardRead> {
   return withCard(prompt, async () => {
-    const before = await inspect();
+    // No counter read before the authentication below. See inspect().
+    const before = await inspect({counter: false});
 
     if (before.protection?.configLocked) {
       throw new CardError('config-locked');
