@@ -28,11 +28,14 @@ import {
   createCard,
   findBySlug,
   knownBatches,
+  chipByUid,
+  logChip,
   recordChip,
   rememberBatch,
   type Batch,
   type Card,
   type ChipRecord,
+  type ChipWrite,
 } from '../cards';
 import type {Key} from '../i18n';
 import {createPassword, importPassword, loadPassword, passwordHex} from '../secrets';
@@ -65,6 +68,8 @@ const CHIP_ERRORS: Record<CardErrorCode, Key> = {
   'wrong-password': 'errWrongPassword',
   'too-big': 'errTooBig',
   'past-end': 'errPastEnd',
+  'url-not-stored': 'errUrlNotStored',
+  'password-not-stored': 'errPasswordNotStored',
 };
 
 function Row({label, value, tone}: {label: string; value: string; tone?: string}) {
@@ -503,6 +508,10 @@ export function ChipTools({nfcReady, t}: {nfcReady: boolean; t: T}) {
   const [password, setPassword] = useState<BatchPassword | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
+  /* Not an error and not a success: the chip is written and correct, and the database did
+   * not hear about it. It needs its own voice — the operation did not fail, and what is on
+   * screen is for that moment the only copy of what just happened. */
+  const [warn, setWarn] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -531,6 +540,7 @@ export function ChipTools({nfcReady, t}: {nfcReady: boolean; t: T}) {
     async (job: () => Promise<CardRead>, done: string | null) => {
       setError(null);
       setNote(null);
+      setWarn(null);
       setCard(null);
       setOwner(undefined);
       setChip(null);
@@ -543,16 +553,23 @@ export function ChipTools({nfcReady, t}: {nfcReady: boolean; t: T}) {
         // The chip only carries a URL. Turning that back into a person is a second trip,
         // to Firestore, and it must not be able to fail the operation that already worked.
         const slug = read.url?.match(OUR_URL)?.[1];
-        if (slug) {
-          findBySlug(slug.toLowerCase())
-            .then(found => {
-              setOwner(found);
-              // Which batch password guards this chip. Without it, a chip from an older
-              // batch is a guessing game; with it, the right password is one tap away.
-              return found ? chipOf(found.id).then(setChip) : null;
-            })
-            .catch(() => setOwner(null));
-        }
+        (async () => {
+          // By UID first: that is the chip in your hand. The card-keyed record is only a
+          // fallback for chips written before this was keyed by chip, and such a record can
+          // describe a different piece of plastic than the one on the phone.
+          const byUid = await chipByUid(read.uid).catch(() => null);
+          if (byUid) {
+            setChip(byUid);
+          }
+          if (!slug) {
+            return;
+          }
+          const found = await findBySlug(slug.toLowerCase());
+          setOwner(found);
+          if (!byUid && found) {
+            setChip(await chipOf(found.id).catch(() => null));
+          }
+        })().catch(() => setOwner(null));
       } catch (e) {
         const msg = String(e instanceof Error ? e.message : e);
         if (e instanceof CardError) {
@@ -618,30 +635,91 @@ export function ChipTools({nfcReady, t}: {nfcReady: boolean; t: T}) {
     (o: {url: string; slug: string; email: string; password: BatchPassword; counter: boolean}) =>
       run(async () => {
         const cardId = o.email ? await cardFor(o.slug, o.email) : null;
-        const written = await writeCard({
-          url: o.url,
-          password: o.password,
-          enableCounter: o.counter,
-          prompt: t('holdWriting'),
-        });
-        // After the chip, not before: this records what actually happened to a physical
-        // object, and it is only true once the chip has accepted the write. A failure here
-        // costs a log line, not the operation — the chip is already correct.
-        if (cardId) {
-          recordChip({
-            cardId,
+
+        let written: CardRead;
+        try {
+          written = await writeCard({
+            url: o.url,
+            password: o.password,
+            enableCounter: o.counter,
+            prompt: t('holdWriting'),
+          });
+        } catch (e) {
+          /*
+           * A refused write is part of a chip's history, and until now it left no trace
+           * anywhere. The UID is unknown here — the write threw before reporting one — so
+           * the entry is "an attempt on this slug, with this batch, that ended this way".
+           *
+           * Swallowed deliberately, and only here: the refusal itself is what the person
+           * has to read, and a logging failure behind it must not replace that message.
+           */
+          await logChip({
+            uid: '',
+            cardId: cardId ?? '',
             slug: o.slug,
-            uid: written.uid,
+            url: o.url,
             batchHex: passwordHex(o.password),
+            outcome: 'failed',
+            error: e instanceof CardError ? e.code : String(e instanceof Error ? e.message : e),
           }).catch(() => {});
+          throw e;
         }
+
+        /*
+         * What happened to a physical object, as the chip itself reported it after the
+         * write rather than as we intended it. Written after the chip, because it is only
+         * true once the chip has accepted.
+         */
+        const record: ChipWrite = {
+          uid: written.uid,
+          cardId: cardId ?? '',
+          slug: o.slug,
+          url: written.url ?? o.url,
+          batchHex: passwordHex(o.password),
+          chipModel: written.chip,
+          userBytes: written.userBytes,
+          usedBytes: written.usedBytes,
+          auth0: written.protection?.auth0 ?? 0xff,
+          readsAlsoProtected: written.protection?.readsAlsoProtected ?? false,
+          configLocked: written.protection?.configLocked ?? false,
+          counterEnabled: written.protection?.counterEnabled ?? false,
+          counterNeedsPassword: written.protection?.counterNeedsPassword ?? false,
+          authLimit: written.protection?.authLimit ?? 0,
+          taps: written.taps,
+          mirror: written.protection?.mirror ?? 'off',
+        };
+
+        /*
+         * Not swallowed any more. The chip is written and cannot be un-written, so this
+         * cannot fail the operation — but a database that quietly did not hear about a
+         * write is exactly how we stopped knowing which password guards which chip. If it
+         * fails, the screen says so and shows the two values that have to be copied by
+         * hand, because this is the only moment they can be.
+         */
+        try {
+          await Promise.all([recordChip(record), logChip({...record, outcome: 'written'})]);
+        } catch {
+          setWarn(t('chipNotRecorded', {uid: record.uid, hex: record.batchHex}));
+        }
+
         return written;
       }, t('wroteOk')),
     [cardFor, run, t],
   );
 
   const erase = useCallback(
-    (p: BatchPassword) => run(() => eraseCard(p, t('holdErasing')), t('erasedOk')),
+    (p: BatchPassword) =>
+      run(async () => {
+        const after = await eraseCard(p, t('holdErasing'));
+        // An erase is a thing that happened to a piece of plastic too, and the history is
+        // only useful if it has both halves of the story in it.
+        try {
+          await logChip({uid: after.uid, batchHex: passwordHex(p), outcome: 'erased'});
+        } catch {
+          setWarn(t('chipNotRecorded', {uid: after.uid, hex: passwordHex(p)}));
+        }
+        return after;
+      }, t('erasedOk')),
     [run, t],
   );
 
@@ -653,6 +731,7 @@ export function ChipTools({nfcReady, t}: {nfcReady: boolean; t: T}) {
     async (o: {slug: string; email: string}) => {
       setError(null);
       setNote(null);
+      setWarn(null);
       setCard(null);
       setOwner(undefined);
       setChip(null);
@@ -703,6 +782,7 @@ export function ChipTools({nfcReady, t}: {nfcReady: boolean; t: T}) {
               setChip(null);
               setError(null);
               setNote(null);
+              setWarn(null);
             }}>
             <Text style={[s.tabText, tab === x ? s.tabTextActive : null]}>
               {t(x === 'read' ? 'tabRead' : x === 'write' ? 'tabWrite' : 'tabErase')}
@@ -738,6 +818,13 @@ export function ChipTools({nfcReady, t}: {nfcReady: boolean; t: T}) {
 
       {error ? <Text style={s.error}>{error}</Text> : null}
       {note ? <Text style={s.done}>{note}</Text> : null}
+      {warn ? (
+        <View style={[s.verdict, {borderColor: C.warn}]}>
+          <Text style={[s.verdictText, {color: C.warn}]} selectable>
+            {warn}
+          </Text>
+        </View>
+      ) : null}
       {card ? <Result card={card} owner={owner} chip={chip} t={t} /> : null}
     </View>
   );

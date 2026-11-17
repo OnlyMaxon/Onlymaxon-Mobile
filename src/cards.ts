@@ -8,10 +8,13 @@
  * data.
  */
 
+import {Platform} from 'react-native';
 import {getApp} from '@react-native-firebase/app';
 import {
+  addDoc,
   collection,
   doc,
+  increment,
   getDoc,
   getDocs,
   setDoc,
@@ -23,7 +26,31 @@ import {
   where,
 } from '@react-native-firebase/firestore';
 
+import {auth} from './account';
+// The app's own version, straight out of the config the build is made from, so a record
+// says which build wrote it. No new dependency for one string.
+import appConfig from '../app.json';
+
 const db = getFirestore(getApp());
+
+/*
+ * Who is at the bench, with what, on what. Added by the writers below rather than passed
+ * in: a caller that has to remember to include it is a caller that will one day forget,
+ * and these three fields are exactly what was missing the day we needed to know which
+ * build had written a chip.
+ */
+const ENV = {
+  app: `${appConfig.expo.version}+${
+    Platform.OS === 'ios' ? appConfig.expo.ios.buildNumber : appConfig.expo.android.versionCode
+  }`,
+  platform: Platform.OS,
+  osVersion: String(Platform.Version),
+};
+
+const who = () => ({
+  byUid: auth.currentUser?.uid ?? '',
+  byEmail: auth.currentUser?.email ?? '',
+});
 
 /** The same rule the slug input enforces, and the one the public URL depends on. */
 export const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,38}$/;
@@ -279,18 +306,108 @@ export async function knownBatches(): Promise<Batch[]> {
  * Admin-only by the rules, and separate from the card document on purpose: the client
  * reads their own card in full, and the batch password must never be in it.
  */
-export type ChipRecord = {
+/*
+ * Everything knowable about one physical chip at the moment it was written.
+ *
+ * The pages that matter cannot be read back — a chip answers READ on its password pages
+ * with zeros, by design — so anything not written down here is a fact nobody can recover
+ * afterwards. That is why this is long rather than tidy: the day it is needed, it is needed
+ * whole.
+ */
+export type ChipWrite = {
+  /** The factory UID, which is also this document's id. */
+  uid: string;
   cardId: string;
   slug: string;
-  uid: string;
+  /** The URL as it was actually read back off the chip, not as it was composed. */
+  url: string;
   batchHex: string;
-  writtenAt: number;
+  chipModel: string;
+  userBytes: number | null;
+  usedBytes: number | null;
+  /** The configuration as the chip reported it after the write, not as we intended it. */
+  auth0: number;
+  readsAlsoProtected: boolean;
+  configLocked: boolean;
+  counterEnabled: boolean;
+  counterNeedsPassword: boolean;
+  authLimit: number;
+  taps: number | null;
+  mirror: string;
 };
 
-export async function recordChip(r: Omit<ChipRecord, 'writtenAt'>): Promise<void> {
-  await setDoc(doc(db, 'chips', r.cardId), {...r, writtenAt: Date.now()}, {merge: true});
+export type ChipRecord = ChipWrite & {
+  /** How many times this piece of plastic has been through the bench. */
+  writes?: number;
+  byUid?: string;
+  byEmail?: string;
+  app?: string;
+  platform?: string;
+  osVersion?: string;
+  deviceWrittenAt?: number;
+};
+
+/*
+ * The current state of one piece of plastic, keyed by the chip's own UID.
+ *
+ * Keyed by the chip and not by the card on purpose. A card can be written onto a second
+ * chip, and a record keyed by the card quietly turns into a record of the most recent one —
+ * which is how a chip already in somebody's pocket came to carry a password that the
+ * database swore was its own. One document per chip, and the history below never loses a
+ * line.
+ */
+export async function recordChip(w: ChipWrite): Promise<void> {
+  await setDoc(
+    doc(db, 'chips', w.uid),
+    {
+      ...w,
+      ...who(),
+      ...ENV,
+      writes: increment(1),
+      // The server's clock, because the phone's is a guess and two records an hour apart
+      // by a wrong clock cannot be read in order. The phone's is kept beside it: the gap
+      // between them is itself worth seeing.
+      writtenAt: serverTimestamp(),
+      deviceWrittenAt: Date.now(),
+    },
+    {merge: true},
+  );
 }
 
+/*
+ * Every attempt on every chip, in order, never overwritten and never deleted.
+ *
+ * Failures are in here too, which is the point: after the fact the useful question is "what
+ * happened to this chip", and a write that refused the password is part of that answer. The
+ * rules allow create and nothing else, so this cannot be edited into a different story.
+ */
+export async function logChip(
+  entry: Partial<ChipWrite> & {
+    uid: string;
+    outcome: 'written' | 'erased' | 'failed';
+    error?: string;
+  },
+): Promise<void> {
+  await addDoc(collection(db, 'chipWrites'), {
+    ...entry,
+    ...who(),
+    ...ENV,
+    at: serverTimestamp(),
+    deviceAt: Date.now(),
+  });
+}
+
+/** By the chip in your hand, which is the only question worth asking at the bench. */
+export async function chipByUid(uid: string): Promise<ChipRecord | null> {
+  const snap = await getDoc(doc(db, 'chips', uid));
+  return snap.exists() ? (snap.data() as ChipRecord) : null;
+}
+
+/*
+ * Records written before this was keyed by UID: the id is the card, and the record
+ * describes whichever chip was written last. Kept because those chips are in people's
+ * pockets and their records are all we have — but read second, after the UID.
+ */
 export async function chipOf(cardId: string): Promise<ChipRecord | null> {
   const snap = await getDoc(doc(db, 'chips', cardId));
   return snap.exists() ? (snap.data() as ChipRecord) : null;

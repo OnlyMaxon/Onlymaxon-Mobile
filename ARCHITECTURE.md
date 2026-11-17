@@ -83,8 +83,9 @@ app: slug + client's email
   ├─▶ Firestore: create card { slug, ownerEmail, ownerUid: null, published: false }
   │      in a transaction with slugs/<slug>, so two people can never get the same address
   │
-  └─▶ chip:  NDEF url → PWD → PACK → ACCESS → AUTH0
-         then Firestore: chips/<cardId> = { uid, batchHex, writtenAt }
+  └─▶ chip:  NDEF url → read it back → PWD → PACK → prove it → ACCESS → AUTH0
+         then Firestore: chips/<chipUid>   = the current state of that piece of plastic
+                         chipWrites/<auto> = the same, appended, never overwritten
 ```
 
 **Database first, chip second, always.** If Firestore refuses, the chip is untouched and the
@@ -167,6 +168,7 @@ to whoever is typing; these are the rule.
 | `cards` | the owner, the address it waits for, admins | the owner (slug and ownerEmail frozen; ownerUid only to null, which is the release); admins create |
 | `slugs` | admins | admins, create-only — this is the uniqueness lock |
 | `chips` | admins | admins |
+| `chipWrites` | admins | admins — create only, no update, no delete |
 | `batches` | admins | admins |
 | everything else | nobody | nobody |
 
@@ -190,7 +192,24 @@ Two writes turn a blank chip into a product:
 | | what | why |
 |---|---|---|
 | 1 | NDEF URL record | ~40 of the 504 usable bytes |
-| 2 | `PWD` + `PACK`, then `ACCESS`, then `AUTH0 = 0x04` | writes need the password; reads stay open |
+| 2 | read the URL back and compare | an ACK is not a commit — see below |
+| 3 | `PWD` + `PACK` | |
+| 4 | `PWD_AUTH` with the same password, and compare the returned `PACK` | the only way to know the password is really on the chip |
+| 5 | `ACCESS`, then `AUTH0 = 0x04` | writes need the password; reads stay open |
+
+**Steps 2 and 4 are not belt-and-braces, they are the whole safety of the operation.** A
+chip acknowledges `WRITE` before it has committed the page to EEPROM, so an ACK proves the
+command arrived, not that the bytes are there. A field that drops in that instant leaves a
+page unwritten and says nothing about it. While `AUTH0` is still off, that costs one retry.
+Once `AUTH0` lands on a chip whose `PWD` page did not take, the chip is armed with a
+password nobody holds and can never be written again by anyone, including us.
+
+That is not a hypothesis. It happened on 2026-11-03 to the chip for `rick`, found on
+2026-11-17: `AUTH0 = 4` (so our own code armed it, successfully), and neither the batch
+password the records named nor the factory `FFFFFFFF` authenticates. The card still works —
+reads are open — but that piece of plastic can never be rewritten. The password pages cannot
+be read back (`READ` returns zeros there, by design), so `PWD_AUTH` before arming is the
+only check that exists.
 
 `AUTH0` goes **last**. Protection applies from that page upwards, and the configuration
 pages sit above any value we set — so the moment `AUTH0` lands, nothing else can be written

@@ -121,8 +121,26 @@ service cloud.firestore {
      * be readable by every client, and with it they could rewrite any chip in that batch,
      * including other people's. Here it is admin-only, like the batch list itself.
      */
-    match /chips/{cardId} {
+    match /chips/{chipUid} {
       allow read, write: if admin();
+    }
+
+    /*
+     * Every attempt on every chip, in order, and nobody may edit the past.
+     *
+     * `chips` above is the current state of a piece of plastic and is overwritten by design.
+     * This is the history, and it exists because the state document once quietly disagreed
+     * with the chip it described: the write that corrected it never reached the database,
+     * the failure was swallowed, and a card already in somebody's pocket was left carrying
+     * a password that nothing on record could open.
+     *
+     * Create only. A log that can be updated is a log that can be made to say the write
+     * went fine.
+     */
+    match /chipWrites/{entryId} {
+      allow get, list: if admin();
+      allow create: if admin();
+      allow update, delete: if false;
     }
 
     /*

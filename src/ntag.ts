@@ -201,7 +201,13 @@ export type CardErrorCode =
   | 'config-locked'
   | 'wrong-password'
   | 'too-big'
-  | 'past-end';
+  | 'past-end'
+  // Both of these mean the same thing to the person holding the chip: the write did not
+  // take, nothing has been locked, put it back on the phone. They are separate codes
+  // because one is the URL and the other is the password, and the second is the one that
+  // used to cost a card.
+  | 'url-not-stored'
+  | 'password-not-stored';
 
 export class CardError extends Error {
   readonly code: CardErrorCode;
@@ -261,6 +267,23 @@ export async function writeCard(opts: {
       await send([CMD.WRITE, page, data[i], data[i + 1], data[i + 2], data[i + 3]]);
     }
 
+    /*
+     * Read the URL back before anything is armed.
+     *
+     * A WRITE is acknowledged before the chip has committed the page to EEPROM, so an ACK
+     * is not proof that the bytes are there: a field that drops in that instant leaves the
+     * page unwritten and nothing says so. While AUTH0 is still off this costs one retry;
+     * once it is on, a chip holding the wrong bytes is scrap.
+     */
+    const back = await trySend([
+      CMD.FAST_READ,
+      PAGE.USER_FIRST,
+      Math.min(PAGE.USER_FIRST + 41, before.lastUserPage),
+    ]);
+    if (!back || parseNdef(back).url !== url) {
+      throw new CardError('url-not-stored');
+    }
+
     // Re-read rather than trusting `before`: this is the last chance to see the real bytes
     // before the password goes on.
     const cfg = await send([CMD.READ, PAGE.CFG0]);
@@ -269,6 +292,26 @@ export async function writeCard(opts: {
 
     await send([CMD.WRITE, PAGE.PWD, ...password.pwd]);
     await send([CMD.WRITE, PAGE.PACK, password.pack[0], password.pack[1], 0x00, 0x00]);
+
+    /*
+     * And now prove the password, before AUTH0 makes it the only way back in.
+     *
+     * PWD_AUTH is answerable on an unprotected chip as well: it compares the PWD page and
+     * hands back PACK, and AUTH0 only decides which pages demand that it happened. So the
+     * password can be checked while the chip is still open, and a PWD page that silently
+     * failed to commit costs a retry instead of the chip.
+     *
+     * Without this, such a chip gets armed with a password nobody holds and can never be
+     * written again by anyone, including us. That is not hypothetical: it happened to a
+     * card that was already in somebody's pocket, and the records said the password we had
+     * was the right one.
+     *
+     * The PACK is compared too, which is what proves the second page as well.
+     */
+    const proof = await trySend([CMD.PWD_AUTH, ...password.pwd]);
+    if (!proof || proof[0] !== password.pack[0] || proof[1] !== password.pack[1]) {
+      throw new CardError('password-not-stored');
+    }
 
     let access = cfg1[0];
     access &= ~0x80; // PROT = 0: writes need the password, reads stay open to every phone

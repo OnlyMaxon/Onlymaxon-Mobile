@@ -482,6 +482,24 @@ const DICT = {
     en: 'The link ran past the end of the chip’s memory.',
     pl: 'Link wyszedł poza pamięć chipa.',
   },
+  /* Both of these are good news wearing an error's clothes: the write stopped before the
+   * protection went on, so the chip is still blank and still ours. The wording has to say
+   * that, or it reads as "another dead card". */
+  errUrlNotStored: {
+    ru: 'Адрес не записался на чип. Защиту не ставили — чип чистый: приложи и запиши заново.',
+    en: 'The address did not make it onto the chip. Nothing was locked — it is still blank: hold it again and write.',
+    pl: 'Adres nie zapisał się na chipie. Nic nie zostało zablokowane — chip jest czysty: przyłóż go i zapisz jeszcze raz.',
+  },
+  errPasswordNotStored: {
+    ru: 'Пароль не записался на чип, и защиту поэтому не поставили — это и спасло чип. Приложи поплотнее, не двигая телефон, и запиши заново.',
+    en: 'The password did not make it onto the chip, so the protection was not armed — which is what saved it. Hold the chip still against the phone and write again.',
+    pl: 'Hasło nie zapisało się na chipie, więc ochrona nie została włączona — to go uratowało. Przyłóż chip i zapisz jeszcze raz, nie ruszając telefonu.',
+  },
+  chipNotRecorded: {
+    ru: 'Чип записан правильно, но база об этом не узнала. Сохрани вручную: UID {uid}, пароль партии {hex}.',
+    en: 'The chip is written and correct, but the database did not hear about it. Save this by hand: UID {uid}, batch password {hex}.',
+    pl: 'Chip jest zapisany poprawnie, ale baza się o tym nie dowiedziała. Zapisz ręcznie: UID {uid}, hasło partii {hex}.',
+  },
   errBatchFormat: {
     ru: 'Пароль партии — 12 символов (0-9, A-F).',
     en: 'A batch password is 12 characters (0-9, A-F).',

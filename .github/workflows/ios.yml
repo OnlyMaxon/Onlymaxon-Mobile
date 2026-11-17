@@ -1,0 +1,89 @@
+# An iOS build without owning a Mac.
+#
+# GitHub rents one by the minute: this job runs on a macOS machine with Xcode on it, builds
+# the app there with `eas build --local`, and uploads the result to TestFlight. "Local" means
+# the build happens on this runner rather than on Expo's servers — which is the whole point,
+# because the free plan's iOS builds are counted per month and run out, and this does not
+# touch that budget. The signing certificate and the NFC provisioning profile still come
+# from EAS, so the build is signed exactly like the ones that went to the store.
+#
+# Minutes are billed at 10x on macOS. 2000 free minutes a month is therefore about six
+# builds, so this is on a button rather than on every push.
+#
+# The only secret it needs is EXPO_TOKEN, from expo.dev/settings/access-tokens. The App
+# Store Connect key is already on EAS and is fetched with the same token.
+
+name: iOS build (on GitHub's Mac)
+
+on:
+  workflow_dispatch:
+    inputs:
+      submit:
+        description: Send it to TestFlight when the build succeeds
+        type: boolean
+        default: true
+
+jobs:
+  ios:
+    runs-on: macos-15
+    timeout-minutes: 90
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Install eas-cli
+        run: npm install -g eas-cli@latest
+
+      # App Store Connect refuses a build number it has already seen, and the committed one
+      # belongs to whatever EAS built last. The run number only ever goes up, so adding it
+      # to the committed number can never collide with itself. Nothing is committed back:
+      # this edit lives and dies inside the runner.
+      - name: Pick a build number nothing has used
+        run: |
+          node -e "
+          const fs = require('fs');
+          const j = JSON.parse(fs.readFileSync('app.json', 'utf8'));
+          const n = Number(j.expo.ios.buildNumber) + Number(process.env.GITHUB_RUN_NUMBER);
+          j.expo.ios.buildNumber = String(n);
+          fs.writeFileSync('app.json', JSON.stringify(j, null, 2) + '\n');
+          console.log('version ' + j.expo.version + ' build ' + n);
+          "
+
+      - name: Build
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          eas build \
+            --platform ios \
+            --profile production-local \
+            --local \
+            --non-interactive \
+            --output "$RUNNER_TEMP/onlymaxon.ipa"
+
+      # Kept whatever happens next: if the TestFlight upload fails, the build itself took
+      # twenty-five minutes of a rented Mac and should not have to happen twice.
+      - name: Keep the ipa
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: onlymaxon-ios
+          path: ${{ runner.temp }}/onlymaxon.ipa
+          retention-days: 14
+
+      - name: TestFlight
+        if: success() && inputs.submit
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          eas submit \
+            --platform ios \
+            --profile production \
+            --path "$RUNNER_TEMP/onlymaxon.ipa" \
+            --non-interactive
