@@ -183,6 +183,13 @@ export const s = StyleSheet.create({
    * top edge and the sweep, which is clipped by `overflow` here.
    */
   magic: {
+    /*
+     * The width has to be stated. With `aspectRatio` alone Yoga stops stretching the box to
+     * the container and derives its width from its height instead — which came out narrower
+     * than the buttons below it and sat against the left edge, because a box that is not
+     * stretched starts at the beginning of the line.
+     */
+    width: '100%',
     aspectRatio: 1.585,
     marginTop: 20,
     padding: 20,
