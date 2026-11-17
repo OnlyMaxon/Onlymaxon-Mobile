@@ -25,16 +25,29 @@ on:
 
 jobs:
   ios:
-    runs-on: macos-15
+    # macOS 26, because firebase-ios-sdk 13 declares swift-tools-version 6.2 and only
+    # Xcode 26 can read that. The macos-15 image tops out at Xcode 16.4 and refuses to
+    # resolve the package graph at all — which is where the first run of this died.
+    runs-on: macos-26
     timeout-minutes: 90
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
+
+      # Images ship several Xcodes and the default is not always the newest. Picked by
+      # version sort rather than by name, so this does not rot when the image updates, and
+      # printed so the next failure is readable.
+      - name: Use the newest Xcode on the runner
+        run: |
+          newest=$(ls -d /Applications/Xcode*.app | sort -V | tail -1)
+          echo "Selecting $newest"
+          sudo xcode-select -s "$newest/Contents/Developer"
+          xcodebuild -version
 
       - run: npm ci
 
