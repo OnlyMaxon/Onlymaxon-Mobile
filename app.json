@@ -42,6 +42,7 @@
         }
       ],
       "expo-secure-store",
+      "./plugins/with-portrait-optional",
       "@react-native-firebase/app",
       "@react-native-firebase/auth",
       [
