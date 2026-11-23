@@ -24,9 +24,14 @@ import {
   BASE_URL,
   LANGS,
   LIMITS,
+  accentInk,
   claim,
+  linkEmpty,
+  linkUsable,
   myCards,
   save,
+  serviceEmpty,
+  serviceUsable,
   type Card,
   type Link,
   type Service,
@@ -34,8 +39,10 @@ import {
 import type {Key} from '../i18n';
 import {PhotoRefused, choosePhoto, photoUrl, removePhoto, setPhoto} from '../photo';
 import {C, s} from '../theme';
+import {ChipActions} from './ChipActions';
 import {DeleteAccount} from './DeleteAccount';
 import {MagicCard} from './MagicCard';
+import {TakeCard} from './TakeCard';
 
 type T = (k: Key, v?: Record<string, string | number>) => string;
 
@@ -181,6 +188,38 @@ function Field({
   );
 }
 
+/*
+ * The colourways, as colours. Named options were fine while there were four of them and
+ * their names were the colours; with eight, "sky" and "cyan" side by side is a riddle, and
+ * `graphite` is not a colour name anybody would guess the look of.
+ */
+function Swatches({
+  value,
+  onChange,
+  t,
+}: {
+  value: string;
+  onChange: (v: (typeof ACCENTS)[number]) => void;
+  t: T;
+}) {
+  return (
+    <View style={s.swatchRow}>
+      {ACCENTS.map(a => (
+        <Pressable
+          key={a}
+          style={[s.swatch, value === a ? s.swatchOn : null]}
+          onPress={() => onChange(a)}
+          hitSlop={4}
+          accessibilityRole="button"
+          accessibilityLabel={`${t('colour')}: ${a}`}
+          accessibilityState={{selected: value === a}}>
+          <View style={[s.swatchDot, {backgroundColor: accentInk(a)}]} />
+        </Pressable>
+      ))}
+    </View>
+  );
+}
+
 function Chips<V extends string>({
   options, value, onChange, labels,
 }: {
@@ -276,7 +315,15 @@ function Rows<R extends Service | Link>({
   );
 }
 
-export function MyCard({account, t}: {account: Account; t: T}) {
+export function MyCard({
+  account,
+  nfcReady,
+  t,
+}: {
+  account: Account;
+  nfcReady: boolean;
+  t: T;
+}) {
   const [cards, setCards] = useState<Card[] | null>(null);
   const [draft, setDraft] = useState<Card | null>(null);
   const [busy, setBusy] = useState(false);
@@ -322,6 +369,26 @@ export function MyCard({account, t}: {account: Account; t: T}) {
         return;
       }
       const next = publish ? {...draft, published: true} : draft;
+
+      /*
+       * Half-filled rows used to be dropped on the way out: save() kept only the rows that
+       * had both fields and an openable address, so a Telegram handle typed as "@onlymaxon"
+       * vanished the moment Save was pressed, with no error and no sign that anything had
+       * happened. Whatever the person typed is now either saved or named here.
+       */
+      const badLink = next.links.findIndex(x => !linkEmpty(x) && !linkUsable(x));
+      if (badLink >= 0) {
+        setSaved(false);
+        setError(t('linkBad', {n: badLink + 1}));
+        return;
+      }
+      const badService = next.services.findIndex(x => !serviceEmpty(x) && !serviceUsable(x));
+      if (badService >= 0) {
+        setSaved(false);
+        setError(t('serviceBad', {n: badService + 1}));
+        return;
+      }
+
       setBusy(true);
       setError(null);
       setSaved(false);
@@ -337,18 +404,28 @@ export function MyCard({account, t}: {account: Account; t: T}) {
         setBusy(false);
       }
     },
-    [draft],
+    [draft, t],
   );
 
   if (cards === null) {
     return <ActivityIndicator color={C.dim} style={s.spin} />;
   }
 
+  /*
+   * Nothing on this address at all — so this is a person who has just registered, and the
+   * answer is to make them a card rather than to tell them there isn't one. A card we made
+   * at the bench and that is still waiting for them is the branch below; that one is found
+   * by their email and must keep working, because every card issued before this screen
+   * existed is one of those.
+   *
+   * Deleting the account stays reachable from here. It is the one control Apple requires of
+   * anything that can create an account (5.1.1(v)), and an account with no card is exactly
+   * the state somebody who changed their mind is in.
+   */
   if (!draft) {
     return (
       <View>
-        <Text style={s.blockLabel}>{t('noCard')}</Text>
-        <Text style={[s.blockText, s.spacedSmall]}>{t('noCardWhy')}</Text>
+        <TakeCard account={account} nfcReady={nfcReady} onTaken={load} t={t} />
         <Pressable style={[s.secondary, s.spaced]} onPress={load}>
           <Text style={s.secondaryText}>{t('checkAgain')}</Text>
         </Pressable>
@@ -441,6 +518,8 @@ export function MyCard({account, t}: {account: Account; t: T}) {
         </Pressable>
         <Text style={[s.hint, {textAlign: 'center'}]}>{t('viewHint')}</Text>
 
+        <ChipActions card={live} nfcReady={nfcReady} t={t} />
+
         {error ? <Text style={s.error}>{error}</Text> : null}
 
         {cards.length > 1 ? (
@@ -514,8 +593,8 @@ export function MyCard({account, t}: {account: Account; t: T}) {
         max={LIMITS.links}
         aKey="label"
         bKey="url"
-        aLabel="Instagram"
-        bLabel="https://..."
+        aLabel="Telegram"
+        bLabel="@tag · https://…"
         t={t}
       />
 
@@ -524,12 +603,7 @@ export function MyCard({account, t}: {account: Account; t: T}) {
       <Chips options={LANGS} value={draft.lang} onChange={v => set('lang', v)} />
 
       <Text style={[s.blockLabel, s.spaced]}>{t('colour')}</Text>
-      <Chips
-        options={ACCENTS}
-        value={draft.accent}
-        onChange={v => set('accent', v)}
-        labels={{studio: 'cyan', amber: 'amber', rose: 'rose', cyan: 'sky'}}
-      />
+      <Swatches value={draft.accent} onChange={v => set('accent', v)} t={t} />
 
       <View style={s.switchRow}>
         <View style={s.switchText}>

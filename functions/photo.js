@@ -17,10 +17,11 @@
  */
 
 import {createHash} from 'node:crypto';
-import {getAuth} from 'firebase-admin/auth';
 import {FieldValue, getFirestore} from 'firebase-admin/firestore';
 import {getStorage} from 'firebase-admin/storage';
 import {onRequest} from 'firebase-functions/v2/https';
+
+import {caller} from './caller.js';
 
 /* The phone sends a 512px JPEG, which is some 40-60 KB. This is the ceiling for a picture
  * that arrived some other way — large enough never to reject honest input, small enough
@@ -29,20 +30,6 @@ const MAX_BYTES = 400 * 1024;
 
 const fail = (res, status, why) =>
   res.status(status).set('cache-control', 'no-store').json({error: why});
-
-/** The caller, or null. A token that is merely *valid* is not enough: an unconfirmed
- *  address is exactly the case the whole product is built to refuse. */
-async function caller(req) {
-  const header = req.get('authorization') || '';
-  const token = header.startsWith('Bearer ') ? header.slice(7).trim() : '';
-  if (!token) return null;
-  try {
-    const decoded = await getAuth().verifyIdToken(token);
-    return decoded.email_verified === true ? decoded : null;
-  } catch {
-    return null;
-  }
-}
 
 /*
  * Trusting the declared type of an upload is how a bucket ends up serving something other

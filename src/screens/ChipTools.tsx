@@ -37,6 +37,7 @@ import {
   type ChipRecord,
   type ChipWrite,
 } from '../cards';
+import {CHIP_ERRORS} from '../chipErrors';
 import type {Key} from '../i18n';
 import {createPassword, importPassword, loadPassword, passwordHex} from '../secrets';
 import {
@@ -46,7 +47,6 @@ import {
   readCard,
   writeCard,
   type BatchPassword,
-  type CardErrorCode,
   type CardRead,
   type Protection,
 } from '../ntag';
@@ -60,17 +60,6 @@ type T = (k: Key, v?: Record<string, string | number>) => string;
 const OUR_URL = /^https:\/\/(?:cards\.onlymaxon\.com|onlymaxon\.com\/u)\/([a-z0-9][a-z0-9-]{1,38})\/?$/i;
 
 type Tab = 'read' | 'write' | 'erase';
-
-/* The chip layer raises codes rather than sentences, because it has no idea what language
- * the phone is in. This is where they become words. */
-const CHIP_ERRORS: Record<CardErrorCode, Key> = {
-  'config-locked': 'errConfigLocked',
-  'wrong-password': 'errWrongPassword',
-  'too-big': 'errTooBig',
-  'past-end': 'errPastEnd',
-  'url-not-stored': 'errUrlNotStored',
-  'password-not-stored': 'errPasswordNotStored',
-};
 
 function Row({label, value, tone}: {label: string; value: string; tone?: string}) {
   return (

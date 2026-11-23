@@ -79,6 +79,24 @@ export const s = StyleSheet.create({
     borderColor: C.line,
   },
   tabActive: {backgroundColor: C.card, borderColor: C.accent},
+
+  /*
+   * Picking a colour by its name is picking a colour you cannot see. Eight of them by name
+   * would be a vocabulary test; eight circles is a glance. The ring is drawn outside the
+   * colour rather than over it, so the swatch itself is never tinted by its own selection.
+   */
+  swatchRow: {flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 6},
+  swatch: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 2,
+    borderColor: 'transparent',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  swatchOn: {borderColor: C.text},
+  swatchDot: {width: 24, height: 24, borderRadius: 12},
   tabText: {color: C.dim, fontSize: 15},
   tabTextActive: {color: C.text},
 

@@ -50,6 +50,13 @@ const LABELS = {
   save:   { en: 'Save contact', pl: 'Zapisz kontakt', ru: 'Сохранить контакт',  tr: 'Kişiyi kaydet', es: 'Guardar contacto' },
   credit: { en: 'Made by OnlyMaxon', pl: 'Zrobione przez OnlyMaxon', ru: 'Сделано в OnlyMaxon',
             tr: 'OnlyMaxon yapımı', es: 'Hecho por OnlyMaxon' },
+  /*
+   * The line that turns somebody else's business card into our shop window. Every tap of
+   * every card opens this page on a stranger's phone, and this is the only thing on it that
+   * says where the card came from — so it asks a question instead of stating a credit.
+   */
+  want:   { en: 'Want a card like this?', pl: 'Chcesz taką wizytówkę?', ru: 'Хочешь такую же карточку?',
+            tr: 'Böyle bir kart ister misin?', es: '¿Quieres una tarjeta así?' },
   soon:   { en: 'This card is not set up yet.', pl: 'Ta karta nie jest jeszcze skonfigurowana.',
             ru: 'Эта карта ещё не настроена.', tr: 'Bu kart henüz hazır değil.',
             es: 'Esta tarjeta aún no está configurada.' },
@@ -111,9 +118,13 @@ box-shadow:0 8px 22px rgba(${rgb(c.a)},.20);transition:transform .12s ease}
 .btn:active{transform:scale(.975)}
 .lnk{list-style:none;margin-top:18px;display:flex;flex-wrap:wrap;gap:8px 18px;justify-content:center}
 .lnk a{color:var(--mut);font-size:13px;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.12)}
-.credit{display:inline-block;margin-top:30px;color:var(--mut);font-size:11px;
-letter-spacing:1.1px;text-transform:uppercase;text-decoration:none}
-.credit:hover,.lnk a:hover{color:var(--a)}
+.sig{display:inline-flex;flex-direction:column;align-items:center;gap:3px;margin-top:30px;
+padding:11px 18px;border:1px solid rgba(255,255,255,.14);border-radius:12px;text-decoration:none}
+.sig b{color:var(--ink);font-size:13px;font-weight:500}
+.sig span{color:var(--mut);font-size:10px;letter-spacing:1.1px;text-transform:uppercase}
+.sig:hover,.sig:active{border-color:var(--a)}
+.sig:hover b,.sig:active b{color:var(--a)}
+.lnk a:hover{color:var(--a)}
 .soft{margin-top:18px;font-size:13px;opacity:.75}
 @keyframes in{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
 .card>*{animation:in .45s cubic-bezier(.2,.7,.3,1) both}
@@ -222,7 +233,7 @@ ${c.role ? `    <p class="role">${esc(c.role)}</p>\n` : ''}${c.location ? `    <
     <div class="btns">
 ${buttons}
     </div>${lnk}
-    <a class="credit" href="${escAttr(home(lang))}">${esc(L('credit', lang))}</a>
+    <a class="sig" href="${escAttr(home(lang))}"><b>${esc(L('want', lang))}</b><span>${esc(L('credit', lang))}</span></a>
   </main>
 </body>
 </html>
@@ -253,7 +264,7 @@ ${css(c)}
     <div class="ava" aria-hidden="true">·</div>
     <p class="bio">${esc(L('soon', lang))}</p>
     <p class="bio soft">${esc(L('claim', lang))}</p>
-    <a class="credit" href="${escAttr(home(lang))}">${esc(L('credit', lang))}</a>
+    <a class="sig" href="${escAttr(home(lang))}"><b>${esc(L('want', lang))}</b><span>${esc(L('credit', lang))}</span></a>
   </main>
 </body>
 </html>

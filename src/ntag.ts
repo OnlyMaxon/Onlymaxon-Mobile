@@ -224,7 +224,10 @@ export type CardErrorCode =
   // because one is the URL and the other is the password, and the second is the one that
   // used to cost a card.
   | 'url-not-stored'
-  | 'password-not-stored';
+  | 'password-not-stored'
+  // A chip somebody already protected, offered to a write that has no password to give —
+  // which is every write a client's own phone makes. Ours, from the bench, still has one.
+  | 'needs-password';
 
 export class CardError extends Error {
   readonly code: CardErrorCode;
@@ -235,17 +238,24 @@ export class CardError extends Error {
 }
 
 /*
- * Write a card and protect it, in one tap.
+ * Write a card, in one tap, and protect it if there is a password to protect it with.
  *
  * Order is not a style choice here. AUTH0 protects every page from itself upwards, and the
  * configuration pages sit above any value we would set — so the moment AUTH0 lands, nothing
  * else can be written without the password. It therefore goes last, after the URL, after
  * PWD and PACK, after the ACCESS byte. Get that order wrong and the card locks itself out
  * halfway through, holding a URL but no password anybody knows.
+ *
+ * `password: null` writes the URL and leaves the chip open, which is how a client's own
+ * phone activates the card they were handed. The password it would otherwise need cannot
+ * travel: it belongs to a batch, it would be in the app binary or on the wire, and with it
+ * anybody could rewrite anybody's chip. A card costs twelve złoty and carries one public
+ * address — so the honest trade is to leave it rewritable rather than to ship the key to
+ * every phone. Our own writes, from the bench, still pass one and still lock.
  */
 export async function writeCard(opts: {
   url: string;
-  password: BatchPassword;
+  password: BatchPassword | null;
   enableCounter: boolean;
   prompt: string;
 }): Promise<CardRead> {
@@ -264,6 +274,9 @@ export async function writeCard(opts: {
     const alreadyProtected =
       !!before.protection && before.protection.auth0 <= before.lastUserPage;
     if (alreadyProtected) {
+      if (!password) {
+        throw new CardError('needs-password');
+      }
       try {
         await send([CMD.PWD_AUTH, ...password.pwd]);
       } catch {
@@ -308,8 +321,10 @@ export async function writeCard(opts: {
     const cfg0 = cfg.slice(0, 4);
     const cfg1 = cfg.slice(4, 8);
 
-    await send([CMD.WRITE, PAGE.PWD, ...password.pwd]);
-    await send([CMD.WRITE, PAGE.PACK, password.pack[0], password.pack[1], 0x00, 0x00]);
+    if (password) {
+      await send([CMD.WRITE, PAGE.PWD, ...password.pwd]);
+      await send([CMD.WRITE, PAGE.PACK, password.pack[0], password.pack[1], 0x00, 0x00]);
+    }
 
     /*
      * And now prove the password, before AUTH0 makes it the only way back in.
@@ -326,9 +341,11 @@ export async function writeCard(opts: {
      *
      * The PACK is compared too, which is what proves the second page as well.
      */
-    const proof = await trySend([CMD.PWD_AUTH, ...password.pwd]);
-    if (!proof || proof[0] !== password.pack[0] || proof[1] !== password.pack[1]) {
-      throw new CardError('password-not-stored');
+    if (password) {
+      const proof = await trySend([CMD.PWD_AUTH, ...password.pwd]);
+      if (!proof || proof[0] !== password.pack[0] || proof[1] !== password.pack[1]) {
+        throw new CardError('password-not-stored');
+      }
     }
 
     let access = cfg1[0];
@@ -340,8 +357,11 @@ export async function writeCard(opts: {
     await send([CMD.WRITE, PAGE.CFG1, access & 0xff, cfg1[1], cfg1[2], cfg1[3]]);
 
     // AUTH0 last. 0x04 means "from the first user page upwards", which also covers pages
-    // 131-134 — so the password protects PWD, PACK, AUTH0 and PROT themselves.
-    await send([CMD.WRITE, PAGE.CFG0, cfg0[0], cfg0[1], cfg0[2], 0x04]);
+    // 131-134 — so the password protects PWD, PACK, AUTH0 and PROT themselves. 0xFF is the
+    // factory value and means nothing is protected: written explicitly rather than left
+    // alone, so a chip being rewritten without a password ends up open rather than keeping
+    // whatever protection the last write put on it.
+    await send([CMD.WRITE, PAGE.CFG0, cfg0[0], cfg0[1], cfg0[2], password ? 0x04 : 0xff]);
 
     return inspect();
   });
@@ -350,13 +370,20 @@ export async function writeCard(opts: {
 /*
  * Back to factory, in one tap.
  *
+ * `password: null` wipes a chip that was never protected, which is every chip a client's
+ * own phone wrote. The pages below are open on such a chip, so the sequence is the same one
+ * — it simply has no password to prove first.
+ *
  * The order mirrors writing, for the same reason. Protection comes off last: every write
  * before it still needs the password, and this session already has it. Taking AUTH0 away
  * first would work too — but then a wipe interrupted halfway leaves an unprotected card
  * still carrying somebody's URL, which is the worst of both states. This way an interrupted
  * wipe leaves a protected card, and a second tap finishes the job.
  */
-export async function eraseCard(password: BatchPassword, prompt: string): Promise<CardRead> {
+export async function eraseCard(
+  password: BatchPassword | null,
+  prompt: string,
+): Promise<CardRead> {
   return withCard(prompt, async () => {
     // No counter read before the authentication below. See inspect().
     const before = await inspect({counter: false});
@@ -367,6 +394,11 @@ export async function eraseCard(password: BatchPassword, prompt: string): Promis
 
     const protectedNow = !!before.protection && before.protection.auth0 <= before.lastUserPage;
     if (protectedNow) {
+      // An owner wiping their own card has no password to offer — theirs was never locked.
+      // One that is locked was written at the bench, and only the bench can wipe it.
+      if (!password) {
+        throw new CardError('needs-password');
+      }
       try {
         await send([CMD.PWD_AUTH, ...password.pwd]);
       } catch {

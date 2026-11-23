@@ -34,7 +34,7 @@ const review = demoPassword ? {
 const config = {
   "configVersion": 0,
   "apple": {
-    "version": "1.1.0",
+    "version": "1.2.1",
     "copyright": "2026 OnlyMaxon Studio",
     "release": {
       "automaticRelease": true
@@ -60,7 +60,7 @@ const config = {
           ]
         },
         "subtitle": "Your NFC card, always current",
-        "releaseNotes": "You can now put your photo on your card, change it, or take it off again. The app speaks Polish, and the language is chosen from a list rather than a row of codes.",
+        "releaseNotes": "The app now opens on your card itself — the black plastic, your photo, your name — and deals it onto the screen. Looking at your page and changing it are two buttons now: View opens the page a visitor sees, Edit opens the form. And if your card is hidden, the card says so.",
         "privacyPolicyUrl": "https://onlymaxon.com/apps/cards/privacy/",
         "supportUrl": "https://onlymaxon.com/",
         "marketingUrl": "https://onlymaxon.com/",
@@ -80,7 +80,7 @@ const config = {
       "pl": {
         "title": "OnlyMaxon",
         "subtitle": "Karta NFC, zawsze aktualna",
-        "releaseNotes": "Możesz teraz dodać swoje zdjęcie do wizytówki, zmienić je albo zdjąć. Aplikacja mówi po polsku, a język wybiera się z listy zamiast z rzędu skrótów.",
+        "releaseNotes": "Aplikacja otwiera się teraz na samej wizytówce — czarny plastik, Twoje zdjęcie, Twoje imię — i wykłada ją na ekran. Podgląd i zmiany to teraz dwa przyciski: Podgląd otwiera stronę, którą widzi odwiedzający, Edytuj otwiera formularz. A jeśli wizytówka jest ukryta, napisane jest to na niej.",
         "privacyPolicyUrl": "https://onlymaxon.com/apps/cards/privacy/",
         "supportUrl": "https://onlymaxon.com/pl/",
         "marketingUrl": "https://onlymaxon.com/pl/",
@@ -99,7 +99,7 @@ const config = {
       "ru": {
         "title": "OnlyMaxon",
         "subtitle": "NFC-карта, всегда актуальная",
-        "releaseNotes": "Теперь на карточку можно поставить своё фото, заменить его или убрать. Приложение говорит по-польски, а язык выбирается из списка, а не из ряда кодов.",
+        "releaseNotes": "Приложение теперь открывается на самой карточке — чёрный пластик, ваше фото, ваше имя — и выкладывает её на экран. Посмотреть страницу и изменить её — теперь две кнопки: «Просмотреть» открывает страницу, которую видит гость, «Изменить» — форму. А если карточка скрыта, об этом написано на самой карточке.",
         "privacyPolicyUrl": "https://onlymaxon.com/apps/cards/privacy/",
         "supportUrl": "https://onlymaxon.com/ru/",
         "marketingUrl": "https://onlymaxon.com/ru/",

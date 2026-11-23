@@ -62,9 +62,38 @@ service cloud.firestore {
       // somebody else's rows.
       allow list: if owns(resource.data) || waitingFor(resource.data) || admin();
 
-      allow create: if admin()
-                    && request.resource.data.ownerUid == null
-                    && request.resource.data.published == false;
+      /*
+       * Two ways a card comes into existence.
+       *
+       * At the bench, by us: the slug and the client's email are typed in, nobody owns it
+       * yet, and the client claims it afterwards with a confirmed address. That is how
+       * every card was made until the order for three hundred of them made it impossible.
+       *
+       * Or by the person themselves, at registration. They own it from the first moment, so
+       * there is no claim step and no window where a row belongs to an address rather than
+       * to an account. Three things keep that honest:
+       *
+       *   - the document id must be their uid. Rules cannot count documents, so "one card
+       *     per account" has no expression as a condition — but an id that can only be the
+       *     uid says the same thing, and update on this branch is refused below, so the
+       *     slug they take cannot later be swapped for another.
+       *   - the address has to be confirmed. Without that, an afternoon of throwaway
+       *     addresses could take every short slug we will ever want to print.
+       *   - the slug has to look like a slug, because it is about to be printed on plastic
+       *     and because it ends up in a URL. The same expression as SLUG_RE in src/cards.ts.
+       */
+      allow create: if (admin()
+                      && request.resource.data.ownerUid == null
+                      && request.resource.data.published == false)
+
+                    || (verified()
+                      && cardId == request.auth.uid
+                      && request.resource.data.ownerUid == request.auth.uid
+                      && request.resource.data.ownerEmail == request.auth.token.email
+                      && request.resource.data.published == false
+                      && request.resource.data.slug is string
+                      && request.resource.data.slug.matches('^[a-z0-9][a-z0-9-]{1,38}$')
+                      && request.resource.data.get('photoPath', '') == '');
 
       allow update: if
         // The owner editing their own card. They may not hand it to somebody else, and
@@ -165,11 +194,46 @@ service cloud.firestore {
      * inside the same transaction that writes the card.
      */
     match /slugs/{slug} {
-      // Read by nobody from a client. The transaction that creates a card reads it with
-      // admin rights, and nothing else has a reason to ask which slugs are taken.
-      allow get, list: if admin();
-      allow create: if admin();
+      /*
+       * One document asked for by name, which is all the transaction that creates a card
+       * needs — and all a client is given. Whether one slug is taken is not a secret: the
+       * page at cards.onlymaxon.com/<slug> answers the same question to anybody with a
+       * browser. Which slugs exist, as a list, is a directory of our clients, so `list`
+       * stays where it was.
+       */
+      allow get: if admin() || verified();
+      allow list: if admin();
+
+      /*
+       * Created by us at the bench, or by the person whose own card it is about to point
+       * at. Tying cardId to the uid is what stops one account from quietly taking a
+       * hundred names: the only slug it can lock is the one belonging to the single card
+       * it is allowed to create.
+       */
+      allow create: if admin()
+                    || (verified() && request.resource.data.cardId == request.auth.uid);
+
+      // Never. A slug is printed on plastic and must never be handed out twice, so a
+      // document here outlives the card, the account and the chip.
       allow update, delete: if false;
+    }
+
+    /*
+     * What each account did with its card: activated it, rewrote the chip, wiped it, and
+     * whether the attempt succeeded — with the app, its version and the platform beside
+     * each entry.
+     *
+     * Written by the `activity` function and by nothing else. The Admin SDK is not governed
+     * by these rules, so there is no write branch here at all: a client that could append
+     * to its own history could also write a history that never happened, and the point of
+     * the log is that it is ours rather than theirs.
+     *
+     * Read by admins only. The person's own card already tells them its state; this exists
+     * so that when a chip misbehaves in somebody's pocket we can see what was done to it.
+     */
+    match /activity/{uid}/events/{entryId} {
+      allow get, list: if admin();
+      allow write: if false;
     }
 
     // Anything not named above.

@@ -10,31 +10,24 @@
  * It deals itself once per launch. A card that re-deals every time the editor is closed
  * stops being an arrival and becomes a wait, so the flag below sits at module scope: it
  * survives a remount and dies with the process, which is exactly "once per launch".
+ *
+ * `card={null}` draws the plastic with nothing on it, which is what the first screen shows
+ * somebody who has not signed in yet. That is not a placeholder for a missing card — it is
+ * the object as it arrives in the envelope, and what people who have held one say they like
+ * about it is exactly that it is black and says nothing.
  */
 
 import {useEffect, useRef, useState} from 'react';
 import {AccessibilityInfo, Animated, Easing, Image, Text, View} from 'react-native';
 
-import type {Card} from '../cards';
+import {accentInk, type Card} from '../cards';
 import type {Key} from '../i18n';
 import {photoUrl} from '../photo';
 import {s} from '../theme';
 
-/*
- * One colour per accent — the `a` of ACCENTS in functions/html.js, which is what the
- * rendered page uses. Only the ink is needed: the surfaces there are tinted, and this card
- * is black.
- */
-const INK: Record<string, string> = {
-  studio: '#22D3EE',
-  amber: '#E7B45A',
-  rose: '#E9A5BC',
-  cyan: '#7FE9F0',
-};
-
 let dealt = false;
 
-export function MagicCard({card, t}: {card: Card; t: (k: Key) => string}) {
+export function MagicCard({card, t}: {card: Card | null; t: (k: Key) => string}) {
   const enter = useRef(new Animated.Value(dealt ? 1 : 0)).current;
   const sheen = useRef(new Animated.Value(dealt ? 1 : 0)).current;
   // The sweep is a band moved by a pixel distance, so it cannot be laid out until the card
@@ -94,9 +87,9 @@ export function MagicCard({card, t}: {card: Card; t: (k: Key) => string}) {
     };
   }, [enter, sheen]);
 
-  const ink = INK[card.accent] ?? INK.studio;
-  const name = card.name.trim();
-  const under = [card.role.trim(), card.location.trim()].filter(Boolean).join(' · ');
+  const ink = accentInk(card?.accent ?? 'studio');
+  const name = card ? card.name.trim() : '';
+  const under = card ? [card.role.trim(), card.location.trim()].filter(Boolean).join(' · ') : '';
 
   return (
     <View>
@@ -120,32 +113,35 @@ export function MagicCard({card, t}: {card: Card; t: (k: Key) => string}) {
         <View style={s.magicEdge} />
 
         <View style={s.magicHead}>
-          {card.photoPath ? (
+          {card?.photoPath ? (
             <Image source={{uri: photoUrl(card.slug, card.photoPath)}} style={s.magicPhoto} />
           ) : (
             <View style={[s.magicPhoto, s.magicPhotoEmpty]}>
+              {/* An empty card has no letter: nothing is printed on the plastic either. */}
               <Text style={[s.magicLetter, {color: ink}]}>
-                {(name || card.slug).charAt(0).toUpperCase()}
+                {card ? (name || card.slug).charAt(0).toUpperCase() : ''}
               </Text>
             </View>
           )}
 
-          <View style={s.magicWho}>
-            <Text style={s.magicName} numberOfLines={1}>
-              {name || card.slug}
-            </Text>
-            {under ? (
-              <Text style={s.magicRole} numberOfLines={1}>
-                {under}
+          {card ? (
+            <View style={s.magicWho}>
+              <Text style={s.magicName} numberOfLines={1}>
+                {name || card.slug}
               </Text>
-            ) : null}
-          </View>
+              {under ? (
+                <Text style={s.magicRole} numberOfLines={1}>
+                  {under}
+                </Text>
+              ) : null}
+            </View>
+          ) : null}
         </View>
 
         <View style={s.magicFoot}>
           <View>
             <View style={[s.magicRule, {backgroundColor: ink}]} />
-            <Text style={s.magicSlug}>cards/{card.slug}</Text>
+            {card ? <Text style={s.magicSlug}>cards/{card.slug}</Text> : null}
           </View>
           <Image source={require('../../assets/mark.png')} style={s.magicMark} />
         </View>

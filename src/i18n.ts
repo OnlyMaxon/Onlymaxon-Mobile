@@ -61,6 +61,42 @@ const DICT = {
     pl: 'Na ten adres przyjdzie e-mail z potwierdzeniem. Dopóki adres nie jest potwierdzony, wizytówki nie można edytować — to właśnie chroni ją przed obcymi.',
   },
 
+  /*
+   * The first screen, which is now the product rather than a form. Somebody is standing
+   * there with a black card in their hand; the sentence has to be about that card and not
+   * about an account.
+   */
+  activateTitle: {
+    ru: 'Активируйте свою карточку',
+    en: 'Activate your card',
+    pl: 'Aktywuj swoją wizytówkę',
+  },
+  activateWhy: {
+    ru: 'Чёрная карта у вас в руках. Зарегистрируйтесь — и она станет вашей страницей, которая открывается одним касанием.',
+    en: 'The black card is in your hand. Register, and it becomes your page — the one that opens with a single tap.',
+    pl: 'Czarna wizytówka jest w Twojej dłoni. Zarejestruj się i stanie się Twoją stroną, którą otwiera jedno zbliżenie.',
+  },
+  firstName: {ru: 'Имя', en: 'First name', pl: 'Imię'},
+  lastName: {ru: 'Фамилия', en: 'Surname', pl: 'Nazwisko'},
+  cardName: {ru: 'Имя карточки', en: 'Card name', pl: 'Nazwa wizytówki'},
+  /* Said in the client's language, not ours: this is a slug, and nobody outside this file
+   * should ever have to learn that word. */
+  cardNameHint: {
+    ru: 'Это адрес вашей страницы. Латинские буквы, цифры и дефис.',
+    en: 'This becomes the address of your page. Latin letters, digits and hyphens.',
+    pl: 'To będzie adres Twojej strony. Łacińskie litery, cyfry i myślniki.',
+  },
+  cardNameBad: {
+    ru: 'Латинские буквы, цифры и дефис, от двух знаков. Начинается с буквы или цифры.',
+    en: 'Latin letters, digits and hyphens, at least two characters, starting with a letter or digit.',
+    pl: 'Łacińskie litery, cyfry i myślniki, co najmniej dwa znaki, zaczyna się literą lub cyfrą.',
+  },
+  cardNameTaken: {
+    ru: 'Имя «{slug}» уже занято. Придумайте другое — это адрес, и он может быть только у одного человека.',
+    en: '“{slug}” is taken. Pick another — it is an address, and only one person can have it.',
+    pl: '„{slug}” jest już zajęte. Wybierz inne — to adres, a adres może mieć tylko jedna osoba.',
+  },
+
   legalPrivacy: {ru: 'Политика', en: 'Privacy', pl: 'Prywatność'},
   legalTerms: {ru: 'Условия', en: 'Terms', pl: 'Warunki'},
 
@@ -88,6 +124,41 @@ const DICT = {
     en: 'Sent again. Check the spam folder too.',
     pl: 'Wysłaliśmy jeszcze raz. Sprawdź też folder ze spamem.',
   },
+
+  // ── taking the card ──
+  takeTitle: {ru: 'Возьмите свою карту', en: 'Take your card', pl: 'Weź swoją wizytówkę'},
+  takeWhy: {
+    ru: 'Приложите карту к телефону. Мы запишем на неё адрес вашей страницы — одно касание, и карта ваша.',
+    en: 'Hold the card against the phone. We write the address of your page onto it — one tap, and the card is yours.',
+    pl: 'Przyłóż wizytówkę do telefonu. Zapiszemy na niej adres Twojej strony — jedno zbliżenie i wizytówka jest Twoja.',
+  },
+  takeNow: {ru: 'Приложить карту', en: 'Hold the card to the phone', pl: 'Przyłóż wizytówkę'},
+  takeDone: {ru: 'Готово. Карта ваша.', en: 'Done. The card is yours.', pl: 'Gotowe. Wizytówka jest Twoja.'},
+  /* The address the card will carry, shown before it is written rather than after: this is
+   * the one decision on the screen that cannot be undone, because it goes onto plastic. */
+  takeAddress: {ru: 'Адрес карточки', en: 'The card’s address', pl: 'Adres wizytówki'},
+
+  // ── the chip, from the owner's side ──
+  chipTitle: {ru: 'Физическая карта', en: 'The card itself', pl: 'Fizyczna wizytówka'},
+  rewriteChip: {ru: 'Перезаписать карту', en: 'Rewrite the card', pl: 'Nadpisz wizytówkę'},
+  rewriteWhy: {
+    ru: 'Запишем на карту тот же адрес заново. Нужно, если карта перестала открывать вашу страницу.',
+    en: 'Writes the same address onto the card again. For when the card has stopped opening your page.',
+    pl: 'Zapisuje ten sam adres na wizytówce ponownie. Przydaje się, gdy wizytówka przestała otwierać Twoją stronę.',
+  },
+  eraseChip: {ru: 'Очистить карту', en: 'Erase the card', pl: 'Wyczyść wizytówkę'},
+  eraseWhy: {
+    ru: 'С карты уйдёт адрес, и она станет чистой. Страница и всё, что вы на ней написали, останутся — карту можно записать заново.',
+    en: 'The address comes off and the card goes blank. Your page and everything on it stay — the card can be written again.',
+    pl: 'Adres zniknie, a wizytówka stanie się pusta. Twoja strona i wszystko na niej zostają — wizytówkę można zapisać ponownie.',
+  },
+  eraseAsk: {
+    ru: 'Очистить карту? Нажмите ещё раз',
+    en: 'Erase the card? Press again',
+    pl: 'Wyczyścić wizytówkę? Naciśnij jeszcze raz',
+  },
+  chipRewritten: {ru: 'Карта записана заново.', en: 'The card has been written again.', pl: 'Wizytówka została zapisana ponownie.'},
+  chipCleared: {ru: 'Карта очищена.', en: 'The card is blank.', pl: 'Wizytówka jest pusta.'},
 
   // ── my card ──
   noCard: {ru: 'Карточки пока нет', en: 'No card yet', pl: 'Nie ma jeszcze wizytówki'},
@@ -183,9 +254,20 @@ const DICT = {
   },
   links: {ru: 'Ссылки', en: 'Links', pl: 'Linki'},
   linksHint: {
-    ru: 'Instagram, сайт, запись. Адрес должен начинаться с https://',
-    en: 'Instagram, website, booking. The address has to start with https://',
-    pl: 'Instagram, strona, zapisy. Adres musi zaczynać się od https://',
+    ru: 'Телеграм, инстаграм, сайт, запись. Для телеграма впиши подпись «Telegram» и @тег — адрес соберётся сам.',
+    en: 'Telegram, Instagram, website, booking. For Telegram write "Telegram" and your @handle — the address is built for you.',
+    pl: 'Telegram, Instagram, strona, zapisy. Dla Telegrama wpisz „Telegram” i @tag — adres zbuduje się sam.',
+  },
+  /* Named rather than silently dropped. See the check in MyCard's store(). */
+  linkBad: {
+    ru: 'Ссылка {n}: нужны и подпись, и адрес. Для телеграма — подпись «Telegram» и @тег.',
+    en: 'Link {n} needs both a label and an address. For Telegram: the label "Telegram" and your @handle.',
+    pl: 'Link {n} potrzebuje i podpisu, i adresu. Dla Telegrama: podpis „Telegram” i @tag.',
+  },
+  serviceBad: {
+    ru: 'Услуга {n}: нужны и название, и цена.',
+    en: 'Service {n} needs both a name and a price.',
+    pl: 'Usługa {n} potrzebuje i nazwy, i ceny.',
   },
   add: {ru: 'Добавить', en: 'Add', pl: 'Dodaj'},
   remove: {ru: 'убрать', en: 'remove', pl: 'usuń'},
@@ -494,6 +576,16 @@ const DICT = {
     ru: 'Пароль не записался на чип, и защиту поэтому не поставили — это и спасло чип. Приложи поплотнее, не двигая телефон, и запиши заново.',
     en: 'The password did not make it onto the chip, so the protection was not armed — which is what saved it. Hold the chip still against the phone and write again.',
     pl: 'Hasło nie zapisało się na chipie, więc ochrona nie została włączona — to go uratowało. Przyłóż chip i zapisz jeszcze raz, nie ruszając telefonu.',
+  },
+  /*
+   * Seen by an owner, not at the bench: a chip that somebody protected, offered to a phone
+   * that has no password to give. Their own card was never locked, so this means the chip
+   * in their hand is not the one their card was written to.
+   */
+  errNeedsPassword: {
+    ru: 'Эта карта защищена паролем, а приложение паролей не хранит. Такую карту можем перезаписать только мы — напишите нам.',
+    en: 'This card is password-protected, and the app holds no passwords. Only we can rewrite one — get in touch.',
+    pl: 'Ta karta jest chroniona hasłem, a aplikacja nie przechowuje haseł. Taką kartę możemy nadpisać tylko my — napisz do nas.',
   },
   chipNotRecorded: {
     ru: 'Чип записан правильно, но база об этом не узнала. Сохрани вручную: UID {uid}, пароль партии {hex}.',

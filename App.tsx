@@ -128,14 +128,14 @@ function Screen() {
           ))}
         </View>
         {tab === 'card' ? (
-          <MyCard account={account} t={t} />
+          <MyCard account={account} nfcReady={nfcReady} t={t} />
         ) : (
           <ChipTools nfcReady={nfcReady} t={t} />
         )}
       </View>
     );
   } else {
-    body = <MyCard account={account} t={t} />;
+    body = <MyCard account={account} nfcReady={nfcReady} t={t} />;
   }
 
   return (

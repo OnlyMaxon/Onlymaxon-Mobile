@@ -38,8 +38,12 @@ const db = getFirestore(getApp());
  * in: a caller that has to remember to include it is a caller that will one day forget,
  * and these three fields are exactly what was missing the day we needed to know which
  * build had written a chip.
+ *
+ * Exported because the activity log in src/activity.ts says the same three things about
+ * the same phone, and two places deciding separately what "the app version" means is how
+ * two records of one tap end up disagreeing.
  */
-const ENV = {
+export const ENV = {
   app: `${appConfig.expo.version}+${
     Platform.OS === 'ios' ? appConfig.expo.ios.buildNumber : appConfig.expo.android.versionCode
   }`,
@@ -91,7 +95,45 @@ export type Card = {
   photoPath: string;
 };
 
-export const ACCENTS = ['studio', 'amber', 'rose', 'cyan'] as const;
+/*
+ * The colourways a card can wear. The palettes themselves live in functions/html.js, which
+ * is what renders the page; this is the list the editor offers and the rules the save
+ * checks against, and the two have to name the same things.
+ *
+ * `graphite` is here because of what people actually said about the plastic: they like that
+ * it is black and says nothing. It is the one accent that is not a colour.
+ */
+export const ACCENTS = [
+  'studio',
+  'cyan',
+  'amber',
+  'rose',
+  'emerald',
+  'violet',
+  'coral',
+  'graphite',
+] as const;
+
+/*
+ * The `a` of each palette in functions/html.js — the only value of it the app needs, for
+ * the swatch in the editor and the hairline on the card it draws. Kept beside the list
+ * above so adding an accent is one edit here and one there, and a missing one is a type
+ * error rather than a blank circle.
+ */
+const INK: Record<(typeof ACCENTS)[number], string> = {
+  studio: '#22D3EE',
+  cyan: '#7FE9F0',
+  amber: '#E7B45A',
+  rose: '#E9A5BC',
+  emerald: '#6EE7B7',
+  violet: '#C4A7FF',
+  coral: '#FF9E7A',
+  graphite: '#D7E0E6',
+};
+
+/* A saved card carries whatever accent was saved, which is a string; this is the lookup. */
+export const accentInk = (accent: string) =>
+  INK[accent as (typeof ACCENTS)[number]] ?? INK.studio;
 export const LANGS = ['en', 'pl', 'ru', 'tr', 'es'] as const;
 
 /* What the editor is allowed to write, and how long each field may be. The limits are here
@@ -125,6 +167,58 @@ const url = (v: unknown, max: number) => {
   const full = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
   return full.slice(0, max);
 };
+
+/*
+ * What a person types for a social account is a handle, not an address: "@onlymaxon" for
+ * Telegram, a phone number for WhatsApp. url() turns the first into "https://@onlymaxon",
+ * which has no dot, so LINK_OK below rejected it and save() dropped the whole row with
+ * nothing on screen to say why — the one thing a card editor must never do.
+ *
+ * The label decides which service it is, because "@name" on its own could be Telegram or
+ * Instagram and guessing wrong sends visitors to a stranger. Whatever the label says is
+ * what the person typed as the name of the link, so it is the honest signal.
+ */
+const SOCIALS: ReadonlyArray<{match: RegExp; build: (handle: string) => string}> = [
+  {match: /telegram|телеграм|tg/i, build: h => `https://t.me/${h}`},
+  {match: /instagram|инстаграм/i, build: h => `https://instagram.com/${h}`},
+  {match: /tiktok|тикток/i, build: h => `https://tiktok.com/@${h}`},
+  {match: /whatsapp|ватсап|вотсап/i, build: h => `https://wa.me/${h.replace(/\D/g, '')}`},
+];
+
+/** An address a browser can actually open. The same test gates the save and the form. */
+export const LINK_OK = /^https?:\/\/.+\..+/i;
+
+/*
+ * The address a row means. A full URL is taken as typed; a bare handle is turned into the
+ * address of the service its label names; anything else falls back to url(), which is what
+ * makes "anna-salon.pl" work.
+ */
+export function linkUrl(label: unknown, raw: unknown): string {
+  const v = String(raw ?? '').trim();
+  if (!v) {
+    return '';
+  }
+  if (/^https?:\/\//i.test(v)) {
+    return url(v, LIMITS.linkUrl);
+  }
+  const name = String(label ?? '');
+  const handle = v.replace(/^@/, '');
+  for (const sc of SOCIALS) {
+    if (sc.match.test(name)) {
+      return sc.build(handle).slice(0, LIMITS.linkUrl);
+    }
+  }
+  return url(v, LIMITS.linkUrl);
+}
+
+/* A row nobody filled in. Dropping one needs no warning; dropping a half-filled one does. */
+export const linkEmpty = (x: Link) => !String(x.label ?? '').trim() && !String(x.url ?? '').trim();
+export const linkUsable = (x: Link) =>
+  Boolean(String(x.label ?? '').trim()) && LINK_OK.test(linkUrl(x.label, x.url));
+
+export const serviceEmpty = (x: Service) => !String(x.name ?? '').trim() && !String(x.price ?? '').trim();
+export const serviceUsable = (x: Service) =>
+  Boolean(String(x.name ?? '').trim()) && Boolean(String(x.price ?? '').trim());
 
 const str = (v: unknown, max: number) =>
   String(v ?? '')
@@ -211,8 +305,8 @@ export async function save(cardId: string, c: Partial<Card>): Promise<void> {
     .slice(0, LIMITS.services);
 
   const links = (c.links ?? [])
-    .map(x => ({label: str(x.label, LIMITS.linkLabel), url: url(x.url, LIMITS.linkUrl)}))
-    .filter(x => x.label && /^https?:\/\/.+\..+/i.test(x.url))
+    .map(x => ({label: str(x.label, LIMITS.linkLabel), url: linkUrl(x.label, x.url)}))
+    .filter(x => x.label && LINK_OK.test(x.url))
     .slice(0, LIMITS.links);
 
   await updateDoc(doc(db, 'cards', cardId), {
@@ -429,6 +523,75 @@ export class SlugTaken extends Error {
     super('slug-taken');
     this.slug = slug;
   }
+}
+
+/*
+ * The card a client makes for themselves, at registration.
+ *
+ * Until now every card was created at the bench: we typed the slug and the client's email,
+ * and the client turned up afterwards to claim it. That does not survive an order for three
+ * hundred cards, so the person registering now picks their own address and owns the row
+ * from the first moment — there is no claim step and no window where the card belongs to
+ * an email rather than to an account.
+ *
+ * The document id is the account's uid, deliberately. Firestore rules cannot count
+ * documents, so "one self-made card per account" has no expression as a condition — but an
+ * id that must equal the uid says the same thing and is enforced by the create rule. A
+ * second card for the same person is still possible; it is made at the bench, by us, with a
+ * random id, the way every card was made before.
+ */
+export async function createMyCard(opts: {
+  uid: string;
+  email: string;
+  slug: string;
+  name: string;
+}): Promise<string> {
+  const slug = opts.slug.trim().toLowerCase();
+  if (!SLUG_RE.test(slug)) {
+    throw new Error('bad-slug');
+  }
+
+  const cardRef = doc(db, 'cards', opts.uid);
+  const slugRef = doc(db, 'slugs', slug);
+
+  await runTransaction(db, async tx => {
+    const taken = await tx.get(slugRef);
+    if (taken.exists()) {
+      throw new SlugTaken(slug);
+    }
+    /*
+     * The uid is one card, so a second pass here would overwrite the first — including its
+     * slug, which is printed on plastic already in somebody's hand. The rules refuse this
+     * too (create only, never update, on this branch); the check is here so the person sees
+     * a sentence instead of "permission denied".
+     */
+    const mine = await tx.get(cardRef);
+    if (mine.exists()) {
+      throw new Error('already-have-card');
+    }
+    tx.set(slugRef, {cardId: opts.uid});
+    tx.set(cardRef, {
+      slug,
+      ownerUid: opts.uid,
+      ownerEmail: opts.email.trim().toLowerCase(),
+      name: str(opts.name, LIMITS.name) || slug,
+      role: '',
+      location: '',
+      bio: '',
+      phone: '',
+      email: '',
+      website: '',
+      accent: 'studio',
+      lang: 'ru',
+      services: [],
+      links: [],
+      published: false,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+  });
+
+  return opts.uid;
 }
 
 /*

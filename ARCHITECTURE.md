@@ -75,7 +75,9 @@ card's content (edited daily). Only the slug is fixed, because it is printed.
 
 ### 1. Issuing a card
 
-At the bench, with the client standing there. One tap does both halves:
+Two ways, and both end with an address on a piece of plastic.
+
+**At the bench, by us**, with the client standing there. One tap does both halves:
 
 ```
 app: slug + client's email
@@ -88,15 +90,40 @@ app: slug + client's email
                          chips/<chipUid>/writes/... = its history, appended, never edited
 ```
 
+**By the person themselves**, from `src/screens/TakeCard.tsx`, which is what an order for
+three hundred cards made necessary. Registration asks for a name and for what the card
+should be called; the card screen then creates the row and writes the chip in one tap.
+
+The chip gets **no password** on that path and no counter. The password belongs to a batch:
+to put one on from somebody's own phone the app would have to be holding it, which means
+shipping it to every phone, which means anybody could rewrite anybody's chip. A card is
+twelve złoty and carries one public address, so the honest trade is to leave it rewritable —
+`AUTH0` is written as `0xFF` rather than `0x04`, explicitly, so a rewrite cannot inherit
+protection from whatever wrote the chip before.
+
+Blank cards therefore exist, and are meant to: fifty of them can be put on the tables at a
+conference and claimed by whoever picks one up. Until somebody activates one, it is a piece
+of plastic with nothing on it.
+
 **Database first, chip second, always.** If Firestore refuses, the chip is untouched and the
 whole thing is one retry away. Reversed, a failed write leaves a protected card in somebody's
 hand pointing at an address that does not exist — and nothing about holding it would tell
 you.
 
+A chip write that fails *after* the row exists is not a failure of the whole act: the page
+is already there, and the card screen offers "rewrite" (`src/screens/ChipActions.tsx`) for
+the second half. That screen can also wipe a card — the row, the slug and everything typed
+into the editor stay, which is what makes it safe to offer to its owner at all.
+
 The chip record is written **after** the chip accepts, because it is a claim about a physical
 object and only becomes true then.
 
 ### 2. The client claims it
+
+Only for a card issued at the bench. A card somebody made for themselves is theirs from the
+first moment: `ownerUid` is set at creation, there is no claim step, and no window in which a
+row belongs to an address rather than to an account. Every card issued before TakeCard
+existed is one of these, which is why this path must keep working.
 
 ```
 registers (email + password) → Firebase sends a confirmation email
@@ -165,16 +192,17 @@ to whoever is typing; these are the rule.
 
 | collection | read | write |
 |---|---|---|
-| `cards` | the owner, the address it waits for, admins | the owner (slug and ownerEmail frozen; ownerUid only to null, which is the release); admins create |
-| `slugs` | admins | admins, create-only — this is the uniqueness lock |
+| `cards` | the owner, the address it waits for, admins | the owner (slug and ownerEmail frozen; ownerUid only to null, which is the release); admins create any; a confirmed address creates exactly one, whose document id must be its own uid |
+| `slugs` | one document by name: admins and anybody confirmed; the list: admins | admins, and a confirmed address taking the one slug for its own card. Create-only — this is the uniqueness lock |
 | `chips` | admins | admins |
 | `chips/<uid>/writes` | admins | admins — create only, no update, no delete |
 | `batches` | admins | admins |
+| `activity/<uid>/events` | admins | nobody — the `activity` function writes it with admin rights |
 | everything else | nobody | nobody |
 
 ### What is in the database, and nothing else is
 
-Four collections. Anything not in this list does not exist, and a fifth one appearing is a
+Five collections. Anything not in this list does not exist, and a sixth one appearing is a
 bug or a leftover, not a feature.
 
 | | id | what it is | who reads it in the console |
@@ -183,6 +211,7 @@ bug or a leftover, not a feature.
 | `slugs` | the slug | the uniqueness lock, one empty-ish document per address ever issued. Never deleted — a slug is printed on plastic and must never be handed out twice | nobody, ever |
 | `chips` | the chip's factory UID | the current state of one piece of plastic: which card, which batch password, how it was configured, who wrote it and with which build. Its `writes` subcollection is that chip's whole history, failures included | us, when a chip misbehaves |
 | `batches` | the password's own hex | every batch password ever used, so a chip from an older batch is never a guessing game | us, when a chip asks for a password we do not have in hand |
+| `activity` | the account's uid | what that account did to its chip — activated, rewrote, wiped — with the app, its version, the platform and whether it worked. Written only by the `activity` function, because a log a client can append to is a log that can be made to say the write went fine | us, when a card misbehaves in somebody's pocket |
 
 **No public read on cards, even published ones.** A document holds `ownerEmail` and
 `ownerUid` next to the public fields, and a rule cannot hand over half a document. The page
@@ -199,7 +228,9 @@ it back to the address it was issued to.
 
 ### The chip
 
-Two writes turn a blank chip into a product:
+Two writes turn a blank chip into a product. Steps 3 to 5 happen only when there is a
+password to protect it with — our own writes from the bench. A card activated by its owner
+stops after step 2 and ends with `AUTH0 = 0xFF`, open to be rewritten. See flow 1.
 
 | | what | why |
 |---|---|---|
