@@ -23,6 +23,19 @@ service cloud.firestore {
       return signedIn() && request.auth.token.email_verified == true;
     }
 
+    /*
+     * One spelling of an address, here as well as in the app.
+     *
+     * Firebase keeps whatever case was typed at registration, so a client who signed up as
+     * Anna@Salon.pl carries exactly that in the token — while every ownerEmail we write is
+     * lowercased, in src/account.ts and at the bench. Comparing the two as given means that
+     * client can neither claim the card made for them nor create one, and the only symptom
+     * is "permission denied". Proven in the emulator, not guessed at.
+     */
+    function myEmail() {
+      return request.auth.token.email.lower();
+    }
+
     // Cards are created at the bench, by us, while writing the chip — there is no sign-up
     // that produces one. The list is written here rather than in a collection on purpose:
     // a document can be created by anything that gets hold of a write, while this can only
@@ -41,7 +54,7 @@ service cloud.firestore {
     function waitingFor(card) {
       return verified()
         && card.ownerUid == null
-        && card.ownerEmail == request.auth.token.email;
+        && card.ownerEmail == myEmail();
     }
 
     match /cards/{cardId} {
@@ -55,7 +68,24 @@ service cloud.firestore {
        * Cloud Function, which reads through the Admin SDK and is not governed by these
        * rules at all, so the public half costs nothing here.
        */
-      allow get: if owns(resource.data) || waitingFor(resource.data) || admin();
+      /*
+       * The uid branch comes first, and it has to.
+       *
+       * `cards/<uid>` is the one document a person may create for themselves, so the
+       * transaction that creates it reads it first to see whether it is already there. On a
+       * document that does not exist `resource` is null, and `owns(resource.data)` is then
+       * not false but an *error* — which denies the read, fails the transaction and shows
+       * somebody standing there with a blank card "permission denied". Rules stop at the
+       * first branch that is true, so a safe test that never touches `resource` must be the
+       * first one. This is the bug the emulator found on 2026-11-23.
+       *
+       * It gives away nothing: a document whose id is your own uid is yours by
+       * construction, and the create rule below is what makes that true.
+       */
+      allow get: if (signedIn() && cardId == request.auth.uid)
+                 || owns(resource.data)
+                 || waitingFor(resource.data)
+                 || admin();
 
       // Listing is how the app finds "my cards". Each document in the result has to pass,
       // so a query that is not filtered to this person simply returns an error rather than
@@ -89,7 +119,7 @@ service cloud.firestore {
                     || (verified()
                       && cardId == request.auth.uid
                       && request.resource.data.ownerUid == request.auth.uid
-                      && request.resource.data.ownerEmail == request.auth.token.email
+                      && request.resource.data.ownerEmail == myEmail()
                       && request.resource.data.published == false
                       && request.resource.data.slug is string
                       && request.resource.data.slug.matches('^[a-z0-9][a-z0-9-]{1,38}$')
