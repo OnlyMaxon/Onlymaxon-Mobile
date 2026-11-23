@@ -60,7 +60,7 @@ const config = {
           ]
         },
         "subtitle": "Your NFC card, always current",
-        "releaseNotes": "The app now opens on your card itself — the black plastic, your photo, your name — and deals it onto the screen. Looking at your page and changing it are two buttons now: View opens the page a visitor sees, Edit opens the form. And if your card is hidden, the card says so.",
+        "releaseNotes": "You can now activate a card yourself: register, hold the card to your phone, and it is yours. It can be rewritten or erased from the app at any time. Your page comes in eight colourways instead of four, one of them no colour at all. And Telegram takes a handle — type @name, and the address is built for you.",
         "privacyPolicyUrl": "https://onlymaxon.com/apps/cards/privacy/",
         "supportUrl": "https://onlymaxon.com/",
         "marketingUrl": "https://onlymaxon.com/",
@@ -80,7 +80,7 @@ const config = {
       "pl": {
         "title": "OnlyMaxon",
         "subtitle": "Karta NFC, zawsze aktualna",
-        "releaseNotes": "Aplikacja otwiera się teraz na samej wizytówce — czarny plastik, Twoje zdjęcie, Twoje imię — i wykłada ją na ekran. Podgląd i zmiany to teraz dwa przyciski: Podgląd otwiera stronę, którą widzi odwiedzający, Edytuj otwiera formularz. A jeśli wizytówka jest ukryta, napisane jest to na niej.",
+        "releaseNotes": "Wizytówkę możesz teraz aktywować samodzielnie: rejestrujesz się, przykładasz ją do telefonu i jest Twoja. W każdej chwili można ją nadpisać albo wyczyścić wprost w aplikacji. Strona ma osiem kolorów zamiast czterech, a jeden z nich nie jest kolorem wcale. Telegram dodaje się tagiem: wpisujesz @nazwa, adres zbuduje się sam.",
         "privacyPolicyUrl": "https://onlymaxon.com/apps/cards/privacy/",
         "supportUrl": "https://onlymaxon.com/pl/",
         "marketingUrl": "https://onlymaxon.com/pl/",
@@ -99,7 +99,7 @@ const config = {
       "ru": {
         "title": "OnlyMaxon",
         "subtitle": "NFC-карта, всегда актуальная",
-        "releaseNotes": "Приложение теперь открывается на самой карточке — чёрный пластик, ваше фото, ваше имя — и выкладывает её на экран. Посмотреть страницу и изменить её — теперь две кнопки: «Просмотреть» открывает страницу, которую видит гость, «Изменить» — форму. А если карточка скрыта, об этом написано на самой карточке.",
+        "releaseNotes": "Карточку теперь можно активировать самому: регистрируетесь, прикладываете карту к телефону — и она ваша. Перезаписать или очистить её можно в любой момент прямо из приложения. Цветов для страницы стало восемь вместо четырёх, и один из них — не цвет вовсе. А телеграм добавляется тегом: пишете @имя, адрес соберётся сам.",
         "privacyPolicyUrl": "https://onlymaxon.com/apps/cards/privacy/",
         "supportUrl": "https://onlymaxon.com/ru/",
         "marketingUrl": "https://onlymaxon.com/ru/",
