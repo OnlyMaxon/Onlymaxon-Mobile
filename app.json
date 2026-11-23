@@ -20,7 +20,7 @@
     },
     "android": {
       "package": "com.onlymaxon.nfc",
-      "versionCode": 14,
+      "versionCode": 15,
       "predictiveBackGestureEnabled": false,
       "adaptiveIcon": {
         "backgroundColor": "#06080C",
