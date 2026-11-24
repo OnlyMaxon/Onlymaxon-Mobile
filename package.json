@@ -32,7 +32,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "test": "node --test src/*.test.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:rules": "npm --prefix rules-test install --silent && firebase emulators:exec --only firestore --project demo-rules \"node rules-test/rules.test.mjs\""
   },
   "private": true
 }

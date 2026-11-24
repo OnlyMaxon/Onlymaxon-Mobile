@@ -1,0 +1,10 @@
+{
+  "name": "onlymaxon-rules-test",
+  "private": true,
+  "type": "module",
+  "description": "Firestore rules tests. Its own package so the Firebase *web* SDK never lands in the app's module graph beside @react-native-firebase.",
+  "dependencies": {
+    "@firebase/rules-unit-testing": "^6.0.0",
+    "firebase": "^13.4.0"
+  }
+}

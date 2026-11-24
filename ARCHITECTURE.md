@@ -190,6 +190,15 @@ thing.
 Everything is in `firestore.rules`, enforced by the server. The app's checks are a courtesy
 to whoever is typing; these are the rule.
 
+**Run `npm run test:rules` before deploying any of them.** 27 checks against the Firestore
+emulator, in `rules-test/` — the journey a client makes, and every refusal that has to stay
+one. It exists because the rules were once reviewed by eye, deployed, and denied the first
+client who tried to take a card: on a document that does not exist `resource` is null, so
+`owns(resource.data)` is not false but an error, and an error denies. That is invisible on
+the page and obvious in the emulator. The test keeps its own `package.json` so the Firebase
+*web* SDK never lands in the app's module graph next to `@react-native-firebase`; it needs
+Java, because the emulator does.
+
 | collection | read | write |
 |---|---|---|
 | `cards` | the owner, the address it waits for, admins | the owner (slug and ownerEmail frozen; ownerUid only to null, which is the release); admins create any; a confirmed address creates exactly one, whose document id must be its own uid |
