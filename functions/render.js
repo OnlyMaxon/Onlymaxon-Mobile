@@ -48,6 +48,9 @@ const LABELS = {
   call:   { en: 'Call',         pl: 'Zadzwoń',        ru: 'Позвонить',          tr: 'Ara',           es: 'Llamar' },
   write:  { en: 'Message',      pl: 'Napisz',         ru: 'Написать',           tr: 'Yaz',           es: 'Escribir' },
   save:   { en: 'Save contact', pl: 'Zapisz kontakt', ru: 'Сохранить контакт',  tr: 'Kişiyi kaydet', es: 'Guardar contacto' },
+  /* A heading for the list. Without it the prices read as a stray table between a bio and
+     a pair of buttons, and one word costs nothing on a page this small. */
+  srv:    { en: 'Services', pl: 'Usługi', ru: 'Услуги', tr: 'Hizmetler', es: 'Servicios' },
   credit: { en: 'Made by OnlyMaxon', pl: 'Zrobione przez OnlyMaxon', ru: 'Сделано в OnlyMaxon',
             tr: 'OnlyMaxon yapımı', es: 'Hecho por OnlyMaxon' },
   /*
@@ -104,27 +107,35 @@ h1{font-size:27px;font-weight:700;letter-spacing:-.4px;line-height:1.15}
 .role{color:var(--a);font-size:12px;font-weight:600;letter-spacing:.7px;text-transform:uppercase;margin-top:6px}
 .loc{color:var(--mut);font-size:13px;margin-top:8px}
 .bio{color:var(--mut);font-size:14px;margin-top:14px}
-.srv{list-style:none;margin-top:22px}
-.srv li{display:flex;justify-content:space-between;align-items:center;gap:12px;
-background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);
-border-radius:11px;padding:11px 14px;margin-bottom:8px;font-size:14px;text-align:left}
+.srv-h{margin-top:26px;margin-bottom:9px;text-align:left;color:var(--mut);
+font-size:10.5px;font-weight:600;letter-spacing:1.3px;text-transform:uppercase}
+.srv{list-style:none;border:1px solid rgba(255,255,255,.08);border-radius:14px;
+background:rgba(255,255,255,.03);overflow:hidden}
+.srv li{display:flex;justify-content:space-between;align-items:center;gap:14px;
+padding:13px 16px;font-size:14.5px;text-align:left;
+border-bottom:1px solid rgba(255,255,255,.06)}
+.srv li:last-child{border-bottom:none}
 .srv b{color:var(--a);white-space:nowrap;font-weight:600}
-.btns{margin-top:24px;display:flex;flex-direction:column;gap:9px}
-.btn{display:block;padding:14px;border-radius:12px;font-size:15px;font-weight:700;
+.btns{margin-top:26px;display:flex;gap:10px}
+.btn{flex:1;display:flex;align-items:center;justify-content:center;min-height:48px;
+padding:12px 14px;border-radius:13px;font-size:15px;font-weight:600;
 text-decoration:none;background:linear-gradient(135deg,var(--a),var(--d));color:var(--on);
-box-shadow:0 8px 22px rgba(${rgb(c.a)},.20);transition:transform .12s ease}
+box-shadow:0 6px 18px rgba(${rgb(c.a)},.18);transition:transform .12s ease}
 .btn2{background:none;border:1px solid var(--a);color:var(--a);box-shadow:none}
 .btn3{background:none;border:1px solid rgba(255,255,255,.14);color:var(--ink);box-shadow:none}
 .btn:active{transform:scale(.975)}
-.lnk{list-style:none;margin-top:18px;display:flex;flex-wrap:wrap;gap:8px 18px;justify-content:center}
-.lnk a{color:var(--mut);font-size:13px;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.12)}
-.sig{display:inline-flex;flex-direction:column;align-items:center;gap:3px;margin-top:30px;
+.lnk{list-style:none;margin-top:14px;display:flex;flex-wrap:wrap;gap:9px;justify-content:center}
+.lnk a{display:inline-flex;align-items:center;min-height:44px;padding:0 17px;
+border-radius:999px;border:1px solid rgba(255,255,255,.13);
+color:var(--ink);font-size:14px;text-decoration:none;
+transition:border-color .15s ease,color .15s ease}
+.sig{display:inline-flex;flex-direction:column;align-items:center;gap:3px;margin-top:34px;
 padding:11px 18px;border:1px solid rgba(255,255,255,.14);border-radius:12px;text-decoration:none}
 .sig b{color:var(--ink);font-size:13px;font-weight:500}
 .sig span{color:var(--mut);font-size:10px;letter-spacing:1.1px;text-transform:uppercase}
 .sig:hover,.sig:active{border-color:var(--a)}
 .sig:hover b,.sig:active b{color:var(--a)}
-.lnk a:hover{color:var(--a)}
+.lnk a:hover,.lnk a:active{color:var(--a);border-color:var(--a)}
 .soft{margin-top:18px;font-size:13px;opacity:.75}
 @keyframes in{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
 .card>*{animation:in .45s cubic-bezier(.2,.7,.3,1) both}
@@ -182,6 +193,7 @@ export function cardPage(c, services, links) {
   const accent = ACCENTS[c.accent] || ACCENTS.studio;
 
   const srv = services.length ? `
+    <p class="srv-h">${esc(L('srv', lang))}</p>
     <ul class="srv">
 ${services.map(s => `      <li><span>${esc(s.name)}</span><b>${esc(s.price)}</b></li>`).join('\n')}
     </ul>` : '';
@@ -191,7 +203,10 @@ ${services.map(s => `      <li><span>${esc(s.name)}</span><b>${esc(s.price)}</b>
   // shown without the scheme because nobody reads "https://" on a business card.
   const allLinks = [
     ...(c.website
-      ? [{label: c.website.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, ''), url: c.website}]
+      ? [{
+          label: c.website.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, ''),
+          url: /^https?:\/\//i.test(c.website) ? c.website : `https://${c.website}`,
+        }]
       : []),
     ...links,
   ];
