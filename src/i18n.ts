@@ -33,6 +33,14 @@ const KEY = 'ui_lang';
 const DICT = {
   // ── shell ──
   signOut: {ru: 'выйти', en: 'sign out', pl: 'wyloguj'},
+  /* Kept to two words in every language: it shares a row with the language code and the
+   * sign-out, and the narrowest phone we support is 360px wide. */
+  aboutUs: {ru: 'О нас', en: 'About', pl: 'O nas'},
+  orderMore: {
+    ru: 'Заказать ещё карточку',
+    en: 'Order another card',
+    pl: 'Zamów kolejną wizytówkę',
+  },
   tabCard: {ru: 'Карточка', en: 'My card', pl: 'Moja wizytówka'},
   tabChips: {ru: 'Карты', en: 'Chips', pl: 'Karty'},
 

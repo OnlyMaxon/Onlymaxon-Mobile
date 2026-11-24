@@ -38,6 +38,7 @@ import {
 } from '../cards';
 import type {Key} from '../i18n';
 import {PhotoRefused, choosePhoto, photoUrl, removePhoto, setPhoto} from '../photo';
+import {studioUrl} from '../studio';
 import {C, s} from '../theme';
 import {ChipActions} from './ChipActions';
 import {DeleteAccount} from './DeleteAccount';
@@ -318,10 +319,12 @@ function Rows<R extends Service | Link>({
 export function MyCard({
   account,
   nfcReady,
+  lang,
   t,
 }: {
   account: Account;
   nfcReady: boolean;
+  lang: string;
   t: T;
 }) {
   const [cards, setCards] = useState<Card[] | null>(null);
@@ -519,6 +522,15 @@ export function MyCard({
         <Text style={[s.hint, {textAlign: 'center'}]}>{t('viewHint')}</Text>
 
         <ChipActions card={live} nfcReady={nfcReady} t={t} />
+
+        {/* Ordering another one is a conversation with us, not a screen in here: it opens
+            the site, where the card is the first thing on the page and the form knows what
+            it is being asked for. */}
+        <Pressable
+          style={[s.secondary, s.spaced]}
+          onPress={() => Linking.openURL(studioUrl(lang))}>
+          <Text style={s.secondaryText}>{t('orderMore')}</Text>
+        </Pressable>
 
         {error ? <Text style={s.error}>{error}</Text> : null}
 

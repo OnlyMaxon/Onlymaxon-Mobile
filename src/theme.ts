@@ -28,18 +28,29 @@ export const s = StyleSheet.create({
 
   header: {flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 24},
   mark: {width: 30, height: 22},
-  headerRight: {marginLeft: 'auto', flexDirection: 'row', alignItems: 'center', gap: 12},
-  langCode: {color: C.dim, fontSize: 13, fontWeight: '600', letterSpacing: 0.5},
+  headerRight: {marginLeft: 'auto', flexDirection: 'row', alignItems: 'center', gap: 10},
+  headerPillText: {color: C.dim, fontSize: 13, fontWeight: '600', letterSpacing: 0.5},
   langActive: {color: C.accent},
 
-  /* The language control. A row of codes fitted while there were two languages; at three it
-   * crowds the sign-out link, so it is one button that opens a list instead. */
-  langButton: {
+  /*
+   * Signing out, in the header, quietly.
+   *
+   * It used to wear `link` — accent cyan, underlined — beside a neatly bordered language
+   * button, which made the loudest thing in the header the one action nobody comes here to
+   * perform. Same size as the pills beside it, same muted colour, no underline and no
+   * border: present when looked for, invisible when not.
+   */
+  signOutText: {color: C.dim, fontSize: 13},
+
+  /* Everything in the header that can be pressed wears this: the language code and the
+   * link to the studio. Two controls that look like two different kinds of thing is how a
+   * header starts to look accidental. */
+  headerPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
     paddingVertical: 6,
-    paddingHorizontal: 10,
+    paddingHorizontal: 9,
     borderRadius: 9,
     borderWidth: 1,
     borderColor: C.line,
@@ -67,7 +78,7 @@ export const s = StyleSheet.create({
   photoLetter: {color: C.dim, fontSize: 28, fontWeight: '600'},
   photoButtons: {flex: 1, gap: 8},
 
-  title: {color: C.text, fontSize: 26, fontWeight: '600', letterSpacing: -0.4},
+  title: {color: C.text, fontSize: 26, fontWeight: '600', letterSpacing: -0.4, flexShrink: 1},
   spin: {marginTop: 24},
 
   tabs: {flexDirection: 'row', gap: 8, marginBottom: 24},

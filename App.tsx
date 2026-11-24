@@ -16,6 +16,7 @@ import {useCallback, useEffect, useState} from 'react';
 import {
   ActivityIndicator,
   Image,
+  Linking,
   Modal,
   Platform,
   Pressable,
@@ -31,6 +32,7 @@ import NfcManager from 'react-native-nfc-manager';
 import {leave, watchAccount, type Account} from './src/account';
 import {isAdmin} from './src/cards';
 import {LANG_NAMES, LANGS, useLang} from './src/i18n';
+import {studioUrl} from './src/studio';
 import {ChipTools} from './src/screens/ChipTools';
 import {MyCard} from './src/screens/MyCard';
 import {SignIn} from './src/screens/SignIn';
@@ -128,14 +130,14 @@ function Screen() {
           ))}
         </View>
         {tab === 'card' ? (
-          <MyCard account={account} nfcReady={nfcReady} t={t} />
+          <MyCard account={account} nfcReady={nfcReady} lang={lang} t={t} />
         ) : (
           <ChipTools nfcReady={nfcReady} t={t} />
         )}
       </View>
     );
   } else {
-    body = <MyCard account={account} nfcReady={nfcReady} t={t} />;
+    body = <MyCard account={account} nfcReady={nfcReady} lang={lang} t={t} />;
   }
 
   return (
@@ -144,20 +146,32 @@ function Screen() {
       <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
         <View style={s.header}>
           <Image source={require('./assets/mark.png')} style={s.mark} resizeMode="contain" />
-          <Text style={s.title}>OnlyMaxon</Text>
+          <Text style={s.title} numberOfLines={1}>
+            OnlyMaxon
+          </Text>
 
           <View style={s.headerRight}>
             <Pressable
-              style={s.langButton}
+              style={s.headerPill}
               hitSlop={6}
               accessibilityLabel={t('language')}
               onPress={() => setLangOpen(true)}>
-              <Text style={s.langCode}>{lang.toUpperCase()}</Text>
+              <Text style={s.headerPillText}>{lang.toUpperCase()}</Text>
               <Text style={s.langCaret}>▼</Text>
             </Pressable>
+
+            {/* The studio, in the system browser. Shown signed in or out: somebody who has
+                not registered yet is exactly the person who wonders who we are. */}
+            <Pressable
+              style={s.headerPill}
+              hitSlop={6}
+              onPress={() => Linking.openURL(studioUrl(lang))}>
+              <Text style={s.headerPillText}>{t('aboutUs')}</Text>
+            </Pressable>
+
             {account ? (
               <Pressable onPress={leave} hitSlop={10}>
-                <Text style={s.link}>{t('signOut')}</Text>
+                <Text style={s.signOutText}>{t('signOut')}</Text>
               </Pressable>
             ) : null}
           </View>
