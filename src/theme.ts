@@ -42,9 +42,9 @@ export const s = StyleSheet.create({
    */
   signOutText: {color: C.dim, fontSize: 13},
 
-  /* Everything in the header that can be pressed wears this: the language code and the
-   * link to the studio. Two controls that look like two different kinds of thing is how a
-   * header starts to look accidental. */
+  /* The language code, which is now the only bordered control in the header: the studio
+   * link that used to sit beside it was taking room the name needed, and moved down to the
+   * card screen where ordering another one already lives. */
   headerPill: {
     flexDirection: 'row',
     alignItems: 'center',

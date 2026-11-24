@@ -16,7 +16,6 @@ import {useCallback, useEffect, useState} from 'react';
 import {
   ActivityIndicator,
   Image,
-  Linking,
   Modal,
   Platform,
   Pressable,
@@ -32,7 +31,6 @@ import NfcManager from 'react-native-nfc-manager';
 import {leave, watchAccount, type Account} from './src/account';
 import {isAdmin} from './src/cards';
 import {LANG_NAMES, LANGS, useLang} from './src/i18n';
-import {studioUrl} from './src/studio';
 import {ChipTools} from './src/screens/ChipTools';
 import {MyCard} from './src/screens/MyCard';
 import {SignIn} from './src/screens/SignIn';
@@ -158,15 +156,6 @@ function Screen() {
               onPress={() => setLangOpen(true)}>
               <Text style={s.headerPillText}>{lang.toUpperCase()}</Text>
               <Text style={s.langCaret}>▼</Text>
-            </Pressable>
-
-            {/* The studio, in the system browser. Shown signed in or out: somebody who has
-                not registered yet is exactly the person who wonders who we are. */}
-            <Pressable
-              style={s.headerPill}
-              hitSlop={6}
-              onPress={() => Linking.openURL(studioUrl(lang))}>
-              <Text style={s.headerPillText}>{t('aboutUs')}</Text>
             </Pressable>
 
             {account ? (

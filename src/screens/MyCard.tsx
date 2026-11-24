@@ -525,7 +525,8 @@ export function MyCard({
 
         {/* Ordering another one is a conversation with us, not a screen in here: it opens
             the site, where the card is the first thing on the page and the form knows what
-            it is being asked for. */}
+            it is being asked for. Since the header pill went, this is also the only way to
+            the studio from inside the app, which is why the label says both. */}
         <Pressable
           style={[s.secondary, s.spaced]}
           onPress={() => Linking.openURL(studioUrl(lang))}>

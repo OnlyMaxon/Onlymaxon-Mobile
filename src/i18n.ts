@@ -33,13 +33,19 @@ const KEY = 'ui_lang';
 const DICT = {
   // ── shell ──
   signOut: {ru: 'выйти', en: 'sign out', pl: 'wyloguj'},
-  /* Kept to two words in every language: it shares a row with the language code and the
-   * sign-out, and the narrowest phone we support is 360px wide. */
-  aboutUs: {ru: 'О нас', en: 'About', pl: 'O nas'},
+  /*
+   * One button, two errands, because they are the same errand.
+   *
+   * There used to be an "About" pill in the header beside the language code, which left
+   * "OnlyMaxon" too little room and cut it short on a 360px phone. It is gone, and this
+   * button carries what it did: it opens the studio, where the card is the first thing on
+   * the page and the form knows what it is being asked for. Somebody who wants a second
+   * card and somebody who wants to know who we are both end up in the same place.
+   */
   orderMore: {
-    ru: 'Заказать ещё карточку',
-    en: 'Order another card',
-    pl: 'Zamów kolejną wizytówkę',
+    ru: 'Узнайте о нас, чтобы заказать карточку',
+    en: 'About us, and how to order a card',
+    pl: 'O nas i jak zamówić wizytówkę',
   },
   tabCard: {ru: 'Карточка', en: 'My card', pl: 'Moja wizytówka'},
   tabChips: {ru: 'Карты', en: 'Chips', pl: 'Karty'},
@@ -289,9 +295,9 @@ const DICT = {
   colour: {ru: 'Цвет', en: 'Colour', pl: 'Kolor'},
   showCard: {ru: 'Показывать карточку', en: 'Show the card', pl: 'Pokazuj wizytówkę'},
   showCardHint: {
-    ru: 'Пока выключено, тот кто приложит карту увидит заглушку, а не пустую страницу.',
-    en: 'While this is off, anyone who taps the card sees a holding page rather than an empty one.',
-    pl: 'Dopóki jest wyłączone, kto zbliży kartę, zobaczy stronę zastępczą, a nie pustą.',
+    ru: 'Пока выключено, тот, кто приложит карту, увидит заглушку.',
+    en: 'While this is off, anyone who taps the card sees a holding page.',
+    pl: 'Dopóki jest wyłączone, kto zbliży kartę, zobaczy stronę zastępczą.',
   },
   save: {ru: 'Сохранить', en: 'Save', pl: 'Zapisz'},
   hiddenBanner: {
