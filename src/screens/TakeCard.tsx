@@ -23,7 +23,7 @@ import {ActivityIndicator, Pressable, Text, TextInput, View} from 'react-native'
 
 import type {Account} from '../account';
 import {report} from '../activity';
-import {BASE_URL, SLUG_RE, SlugTaken, createMyCard} from '../cards';
+import {BASE_URL, SLUG_RE, SlugTaken, createMyCard, toSlug} from '../cards';
 import type {Key} from '../i18n';
 import {CardError, writeCard} from '../ntag';
 import {clearPending, readPending} from '../pending';
@@ -178,7 +178,7 @@ export function TakeCard({
       <TextInput
         style={s.input}
         value={slug}
-        onChangeText={v => setSlug(v.replace(/\s+/g, '-').toLowerCase())}
+        onChangeText={v => setSlug(toSlug(v))}
         placeholder="anna-kowalska"
         placeholderTextColor={C.dim}
         autoCapitalize="none"

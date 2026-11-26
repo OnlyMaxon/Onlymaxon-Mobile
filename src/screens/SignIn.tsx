@@ -18,7 +18,7 @@ import {useCallback, useState} from 'react';
 import {ActivityIndicator, Linking, Pressable, Text, TextInput, View} from 'react-native';
 
 import {authErrorKey, register, resetPassword, signIn} from '../account';
-import {BASE_URL, SLUG_RE} from '../cards';
+import {BASE_URL, SLUG_RE, toSlug} from '../cards';
 import type {Key} from '../i18n';
 import {savePending} from '../pending';
 import {C, s} from '../theme';
@@ -200,10 +200,14 @@ export function SignIn({t}: {t: T}) {
           {mode === 'up' ? (
             <View>
               <Text style={s.label}>{t('cardName')}</Text>
+              {/* Transliterated on every keystroke, so "Анна Иванова" lands in the box as
+                  "anna-ivanova" and the box is never showing something the chip cannot
+                  carry. The field used to accept the Cyrillic and then leave the button
+                  grey, which told nobody anything. See src/slug.ts. */}
               <TextInput
                 style={s.input}
                 value={slug}
-                onChangeText={v => setSlug(v.replace(/\s+/g, '-').toLowerCase())}
+                onChangeText={v => setSlug(toSlug(v))}
                 placeholder="anna-kowalska"
                 placeholderTextColor={C.dim}
                 autoCapitalize="none"

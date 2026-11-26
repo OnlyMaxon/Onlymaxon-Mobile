@@ -355,6 +355,8 @@ src/
   ntag.ts            the chip: read, write, erase — raw commands
   ndef.ts            the URL format, pure functions, no radio
   ndef.test.ts       npm test — the part that can be checked on a laptop
+  slug.ts            what somebody typed, as an address — transliterated, no imports
+  slug.test.ts       npm test — Russian and Polish names through the rule
   secrets.ts         the batch password in the device keychain
   i18n.ts            every string in the app, ru + en
   theme.ts           the studio's colour tokens, lifted from the site

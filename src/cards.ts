@@ -27,6 +27,7 @@ import {
 } from '@react-native-firebase/firestore';
 
 import {auth} from './account';
+import {SLUG_RE, toSlug} from './slug';
 // The app's own version, straight out of the config the build is made from, so a record
 // says which build wrote it. No new dependency for one string.
 import appConfig from '../app.json';
@@ -56,8 +57,13 @@ const who = () => ({
   byEmail: auth.currentUser?.email ?? '',
 });
 
-/** The same rule the slug input enforces, and the one the public URL depends on. */
-export const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,38}$/;
+/*
+ * The rule the address obeys, and the function that makes an address out of whatever a
+ * person typed. Both live in src/slug.ts, which imports nothing, so they can be tested on
+ * a laptop; they are re-exported here because this is where the app has always looked for
+ * the rule, and firestore.rules and functions/index.js spell out the same one.
+ */
+export {SLUG_RE, toSlug};
 
 /*
  * Cards live on their own hostname. The site is a static build on GitHub Pages and a card
@@ -585,7 +591,22 @@ export async function createMyCard(opts: {
       lang: 'ru',
       services: [],
       links: [],
-      published: false,
+      /*
+       * Visible from the first moment, unlike a card made at the bench.
+       *
+       * It used to arrive hidden, so the first thing its owner saw was a warning and a
+       * button called "Show and save" — a chore standing between somebody who has just
+       * registered and the card they registered for. The card they get here is not empty:
+       * registration asked for their name, so the page has a name on it, and all that
+       * hiding it accomplished was that the chip in their hand opened a holding page until
+       * they found the switch.
+       *
+       * A card made by us (createCard, below) still starts hidden, and must: nobody owns it
+       * yet and there is no name on it, so the holding page is exactly right until its
+       * owner registers. The switch in the editor is unchanged — hiding the card is still
+       * theirs to do, which is the difference between a default and a decision.
+       */
+      published: true,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });

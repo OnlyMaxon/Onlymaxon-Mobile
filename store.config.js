@@ -34,7 +34,7 @@ const review = demoPassword ? {
 const config = {
   "configVersion": 0,
   "apple": {
-    "version": "1.2.1",
+    "version": "1.2.2",
     "copyright": "2026 OnlyMaxon Studio",
     "release": {
       "automaticRelease": true
@@ -60,7 +60,7 @@ const config = {
           ]
         },
         "subtitle": "Your NFC card, always current",
-        "releaseNotes": "You can now activate a card yourself: register, hold the card to your phone, and it is yours. It can be rewritten or erased from the app at any time. Your page comes in eight colourways instead of four, one of them no colour at all. And Telegram takes a handle — type @name, and the address is built for you.",
+        "releaseNotes": "You can write your card's name in your own alphabet now — Russian, Polish, whatever you actually type — and the address is built from it as you go. The name OnlyMaxon fits in the header again, and one button at the bottom of your card both tells you about us and orders another card.",
         "privacyPolicyUrl": "https://onlymaxon.com/apps/cards/privacy/",
         "supportUrl": "https://onlymaxon.com/",
         "marketingUrl": "https://onlymaxon.com/",
@@ -80,7 +80,7 @@ const config = {
       "pl": {
         "title": "OnlyMaxon",
         "subtitle": "Karta NFC, zawsze aktualna",
-        "releaseNotes": "Wizytówkę możesz teraz aktywować samodzielnie: rejestrujesz się, przykładasz ją do telefonu i jest Twoja. W każdej chwili można ją nadpisać albo wyczyścić wprost w aplikacji. Strona ma osiem kolorów zamiast czterech, a jeden z nich nie jest kolorem wcale. Telegram dodaje się tagiem: wpisujesz @nazwa, adres zbuduje się sam.",
+        "releaseNotes": "Nazwę wizytówki możesz teraz wpisać po swojemu — po polsku, po rosyjsku — a adres zbuduje się z niej sam, w trakcie pisania. Nazwa OnlyMaxon znów mieści się w nagłówku, a jeden przycisk na dole wizytówki prowadzi i do nas, i do zamówienia kolejnej karty.",
         "privacyPolicyUrl": "https://onlymaxon.com/apps/cards/privacy/",
         "supportUrl": "https://onlymaxon.com/pl/",
         "marketingUrl": "https://onlymaxon.com/pl/",
@@ -99,7 +99,7 @@ const config = {
       "ru": {
         "title": "OnlyMaxon",
         "subtitle": "NFC-карта, всегда актуальная",
-        "releaseNotes": "Карточку теперь можно активировать самому: регистрируетесь, прикладываете карту к телефону — и она ваша. Перезаписать или очистить её можно в любой момент прямо из приложения. Цветов для страницы стало восемь вместо четырёх, и один из них — не цвет вовсе. А телеграм добавляется тегом: пишете @имя, адрес соберётся сам.",
+        "releaseNotes": "Имя карточки теперь можно писать по-русски — адрес соберётся из него сам, пока вы печатаете. Название OnlyMaxon снова помещается в шапке целиком, а одна кнопка внизу карточки и рассказывает о нас, и заказывает ещё карту.",
         "privacyPolicyUrl": "https://onlymaxon.com/apps/cards/privacy/",
         "supportUrl": "https://onlymaxon.com/ru/",
         "marketingUrl": "https://onlymaxon.com/ru/",

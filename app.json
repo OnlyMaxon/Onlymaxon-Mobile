@@ -3,7 +3,7 @@
     "name": "OnlyMaxon",
     "slug": "onlymaxon-cards",
     "owner": "onlymaxons-team",
-    "version": "1.2.1",
+    "version": "1.2.2",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "maxoncards",
@@ -20,7 +20,7 @@
     },
     "android": {
       "package": "com.onlymaxon.nfc",
-      "versionCode": 17,
+      "versionCode": 18,
       "predictiveBackGestureEnabled": false,
       "adaptiveIcon": {
         "backgroundColor": "#06080C",

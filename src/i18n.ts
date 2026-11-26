@@ -94,16 +94,23 @@ const DICT = {
   lastName: {ru: 'Фамилия', en: 'Surname', pl: 'Nazwisko'},
   cardName: {ru: 'Имя карточки', en: 'Card name', pl: 'Nazwa wizytówki'},
   /* Said in the client's language, not ours: this is a slug, and nobody outside this file
-   * should ever have to learn that word. */
+   * should ever have to learn that word.
+   *
+   * It used to say "Latin letters, digits and hyphens", which was an instruction, and the
+   * field enforced it by refusing: somebody typing "Анна Иванова" saw their name in the box
+   * and a grey button with nothing said about why. Now src/slug.ts transliterates as they
+   * type, so this says what happens rather than what is forbidden — and the line below it
+   * is the address itself, which is the real answer. */
   cardNameHint: {
-    ru: 'Это адрес вашей страницы. Латинские буквы, цифры и дефис.',
-    en: 'This becomes the address of your page. Latin letters, digits and hyphens.',
-    pl: 'To będzie adres Twojej strony. Łacińskie litery, cyfry i myślniki.',
+    ru: 'Это адрес вашей страницы. Пишите как удобно, хоть по-русски — латиница получится сама.',
+    en: 'This becomes the address of your page. Write it any way you like — it turns into Latin letters as you type.',
+    pl: 'To będzie adres Twojej strony. Pisz jak chcesz — łacińskie litery pojawią się same.',
   },
+  /* Only length is left to get wrong: the alphabet is handled while they type. */
   cardNameBad: {
-    ru: 'Латинские буквы, цифры и дефис, от двух знаков. Начинается с буквы или цифры.',
-    en: 'Latin letters, digits and hyphens, at least two characters, starting with a letter or digit.',
-    pl: 'Łacińskie litery, cyfry i myślniki, co najmniej dwa znaki, zaczyna się literą lub cyfrą.',
+    ru: 'Нужно хотя бы два знака — одной буквы для адреса мало.',
+    en: 'At least two characters — one letter is too short for an address.',
+    pl: 'Potrzebne są co najmniej dwa znaki — jedna litera to za krótki adres.',
   },
   cardNameTaken: {
     ru: 'Имя «{slug}» уже занято. Придумайте другое — это адрес, и он может быть только у одного человека.',

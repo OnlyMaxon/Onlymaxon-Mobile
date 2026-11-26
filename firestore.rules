@@ -111,6 +111,16 @@ service cloud.firestore {
        *     addresses could take every short slug we will ever want to print.
        *   - the slug has to look like a slug, because it is about to be printed on plastic
        *     and because it ends up in a URL. The same expression as SLUG_RE in src/cards.ts.
+       *
+       * `published` is not on that list, on this branch only. It had to be false, which
+       * meant a person's own card arrived hidden behind a warning and a button before they
+       * could see the thing they had just registered for; the app now creates it visible.
+       * Whether a card of theirs is visible was never ours to decide either way — the
+       * update branch below lets them flip it a second later. The clause is deleted rather
+       * than inverted so that both the version in the stores, which sends false, and the
+       * one replacing it, which sends true, are accepted: no registration falls into the
+       * gap between a rules deploy and a store review. The bench branch above still
+       * insists on false, because that card has no owner and no name on it yet.
        */
       allow create: if (admin()
                       && request.resource.data.ownerUid == null
@@ -120,7 +130,6 @@ service cloud.firestore {
                       && cardId == request.auth.uid
                       && request.resource.data.ownerUid == request.auth.uid
                       && request.resource.data.ownerEmail == myEmail()
-                      && request.resource.data.published == false
                       && request.resource.data.slug is string
                       && request.resource.data.slug.matches('^[a-z0-9][a-z0-9-]{1,38}$')
                       && request.resource.data.get('photoPath', '') == '');

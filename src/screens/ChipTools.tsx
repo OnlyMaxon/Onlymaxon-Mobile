@@ -32,6 +32,7 @@ import {
   logChip,
   recordChip,
   rememberBatch,
+  toSlug,
   type Batch,
   type Card,
   type ChipRecord,
@@ -390,7 +391,7 @@ function WriteTab({
         <TextInput
           style={s.slugInput}
           value={slug}
-          onChangeText={setSlug}
+          onChangeText={v => setSlug(toSlug(v))}
           placeholder="anna"
           placeholderTextColor={C.dim}
           autoCapitalize="none"

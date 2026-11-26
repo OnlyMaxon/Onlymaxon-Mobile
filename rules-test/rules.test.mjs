@@ -56,6 +56,8 @@ const as = (uid, email, confirmed = true) =>
 const verified = as(UID, EMAIL);
 const unverified = as('uid-bob', 'bob@x.pl', false);
 const stranger = as('uid-eve', 'eve@x.pl');
+/* Us, at the bench. The address is the one listed in admin() in firestore.rules. */
+const bench = as('uid-max', 'calilorucli42@gmail.com');
 
 /** A card document shaped the way createMyCard writes one. */
 const card = (over = {}) => ({
@@ -73,7 +75,7 @@ const card = (over = {}) => ({
   lang: 'ru',
   services: [],
   links: [],
-  published: false,
+  published: true,
   ...over,
 });
 
@@ -107,6 +109,19 @@ await check('read both and write both, in one transaction', () =>
     }),
   ));
 
+/*
+ * Both shapes, because two versions of the app are in the world at once. The one in the
+ * stores sends published false and the one replacing it sends true; the rule takes either,
+ * so nobody registering on an old install is refused while the new one is in review.
+ */
+console.log('\na card made by its owner, hidden or visible');
+await env.clearFirestore();
+await check('visible from the first moment, as the app now makes it', () =>
+  assertSucceeds(setDoc(doc(verified, 'cards', UID), card())));
+await env.clearFirestore();
+await check('hidden at birth, as the version in the stores makes it', () =>
+  assertSucceeds(setDoc(doc(verified, 'cards', UID), card({published: false}))));
+
 console.log('\nwhat the app does next');
 await check('myCards: the cards I own', () =>
   assertSucceeds(getDocs(query(collection(verified, 'cards'), where('ownerUid', '==', UID)))));
@@ -124,6 +139,8 @@ await check('save an edit', () =>
   assertSucceeds(updateDoc(doc(verified, 'cards', UID), {name: 'Anna K', bio: 'hello'})));
 await check('publish it', () =>
   assertSucceeds(updateDoc(doc(verified, 'cards', UID), {published: true})));
+await check('hide it again', () =>
+  assertSucceeds(updateDoc(doc(verified, 'cards', UID), {published: false})));
 await check('let go of it, as deleting an account does', () =>
   assertSucceeds(
     updateDoc(doc(verified, 'cards', UID), {ownerUid: null, published: false, photoPath: ''}),
@@ -156,8 +173,19 @@ await check('a card owned by somebody else', () =>
   assertFails(setDoc(doc(verified, 'cards', UID), card({ownerUid: 'uid-bob'}))));
 await check('a card on an address that is not mine', () =>
   assertFails(setDoc(doc(verified, 'cards', UID), card({ownerEmail: 'someone@else.pl'}))));
-await check('a card published from the start', () =>
-  assertFails(setDoc(doc(verified, 'cards', UID), card({published: true}))));
+/*
+ * A card made at the bench still may not arrive visible, and this is the half of that
+ * change worth guarding. Nobody owns such a card and nothing is written on it: published
+ * from the start, it would be a stranger's name-less page on a slug we are about to print,
+ * instead of the holding page that says what the plastic is and who to ask about it.
+ */
+await check('the bench creating a card already visible', () =>
+  assertFails(
+    setDoc(
+      doc(bench, 'cards/bench-visible'),
+      card({slug: 'olga', ownerUid: null, ownerEmail: 'olga@salon.pl', published: true}),
+    ),
+  ));
 await check('a slug that is not a slug', () =>
   assertFails(setDoc(doc(verified, 'cards', UID), card({slug: 'Anna Kowalska!'}))));
 await check('a card arriving with a photo path', () =>
