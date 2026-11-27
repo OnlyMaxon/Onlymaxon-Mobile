@@ -1,0 +1,39 @@
+rules_version = '2';
+
+/*
+ * Who may reach into the bucket from a phone or a browser: nobody.
+ *
+ * This file exists because of what was *not* in the repository. Every other boundary in
+ * this project is written down, reviewed and tested — firestore.rules has 30 checks against
+ * the emulator — while the bucket holding our clients' faces was running on whatever was
+ * last typed into the Firebase console, which nobody has read since the day Storage was
+ * switched on. The default template Firebase offers at that moment is
+ * `allow read, write: if request.auth != null`, and every client of the app is signed in:
+ * that one line would let any of them list the bucket and download every other client's
+ * photograph. A rule nobody can review is not a rule, it is a hope.
+ *
+ * Closed completely, rather than carefully, and that costs nothing — because no client
+ * was ever meant to be here:
+ *
+ *   - Putting a photo on a card is a POST to the `photo` function, which checks the token,
+ *     checks who owns the card, checks the bytes are a JPEG, and chooses the object name
+ *     itself. The path is the one thing a client must never pick; see the note beside
+ *     `photoPath` in firestore.rules.
+ *   - Showing a photo is /<slug>/photo, streamed by the `card` function. That is what lets
+ *     the bucket stay private while the picture is public — a stranger tapping a card needs
+ *     the face, not an address inside our storage.
+ *   - Both read and write through the Admin SDK, which is not governed by this file at all.
+ *     Deploying it therefore changes nothing that works today, and the app could not use
+ *     the bucket even if it wanted to: @react-native-firebase/storage is not a dependency.
+ *
+ * So the honest expression of the design is `false`. If a client-side upload is ever
+ * genuinely wanted, this file is where that decision becomes visible, with a test beside it
+ * in rules-test/storage.test.mjs — which is the whole point of the file existing.
+ */
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

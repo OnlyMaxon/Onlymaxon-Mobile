@@ -376,6 +376,10 @@ functions/           Cloud Function `card` — renders the public page
 
 edge/worker.js       Cloudflare: Host rewrite, /u/ redirect, /__/ passthrough
 firestore.rules      who may touch what — the real enforcement
+storage.rules        nobody, from a client: the bucket is reached only by the
+                     functions, through the Admin SDK, which no rule governs
+rules-test/          both of the above, run against the emulator rather than read:
+                     npm run test:rules, npm run test:storage (each needs Java)
 public/robots.txt    cards are handed to people, not found in search
 
 store/               what the two stores are fed: store.config.js is pushed with
@@ -398,5 +402,7 @@ Google separately from the in-app button. `src/screens/SignIn.tsx` links the fir
   it on a handset, and the Android NFC path — `nfcAHandler.transceive`, a different call
   from the iOS one — has never been exercised at all.
 - **Nothing here has been tested beyond reading it.** Types, unit tests on the NDEF encoder
-  and expo-doctor all pass; the flows were checked by review and by Max using the app. There
-  are no tests over `firestore.rules`, and account deletion has never been run end to end.
+  and expo-doctor all pass; the flows were checked by review and by Max using the app. The
+  rules are the exception: `firestore.rules` and `storage.rules` are both executed
+  against the emulator, 30 checks and 11, because a rule is only ever "certain" once
+  something has run it. Account deletion has never been run end to end.

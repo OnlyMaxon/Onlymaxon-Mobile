@@ -33,7 +33,8 @@
     "web": "expo start --web",
     "test": "node --test src/*.test.ts",
     "typecheck": "tsc --noEmit",
-    "test:rules": "npm --prefix rules-test install --silent && firebase emulators:exec --only firestore --project demo-rules \"node rules-test/rules.test.mjs\""
+    "test:rules": "npm --prefix rules-test install --silent && firebase emulators:exec --only firestore --project demo-rules \"node rules-test/rules.test.mjs\"",
+    "test:storage": "npm --prefix rules-test install --silent && firebase emulators:exec --only storage --project demo-rules \"node rules-test/storage.test.mjs\""
   },
   "private": true
 }
